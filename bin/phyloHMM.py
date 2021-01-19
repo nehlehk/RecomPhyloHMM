@@ -15,6 +15,7 @@ from dendropy.calculate import treecompare
 from sklearn.metrics import mean_squared_error
 import math
 import argparse
+import csv
 
 
 
@@ -555,7 +556,13 @@ def comparison_plot(RealData,predictionData):
         ax.legend(loc=1, bbox_to_anchor=(1.23, 1.1))
         plt.savefig("taxa" + str(i) + ".jpeg")
 # **********************************************************************************************************************
+def write_rmse(nu,rmse_real_predict,rmse_clonal_predict,rmse_clonal_real):
+    with open('rmse.rmse', mode='w') as rmse_file:
+        rmse_writer = csv.writer(rmse_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
 
+        rmse_writer.writerow(['nu_hmm','rmse_real_predict','rmse_clonal_predict','rmse_clonal_real'])
+        rmse_writer.writerow([nu, rmse_real_predict,rmse_clonal_predict,rmse_clonal_real])
+# **********************************************************************************************************************
 
 
 if __name__ == "__main__":
@@ -633,7 +640,8 @@ if __name__ == "__main__":
     rmse_clonal_predict = calc_rmse(clonalData, predictDate)
     rmse_clonal_real = calc_rmse(clonalData, realData)
 
-    print("rmse_real_predict:",rmse_real_predict, "     rmse_clonal_predict:",rmse_clonal_predict , "       rmse_clonal_real:",rmse_clonal_real)
+    # print("rmse_real_predict:",rmse_real_predict, "     rmse_clonal_predict:",rmse_clonal_predict , "       rmse_clonal_real:",rmse_clonal_real)
+    write_rmse(nu,rmse_real_predict, rmse_clonal_predict, rmse_clonal_real)
 
     comparison_plot(realData, predictDate)
 
