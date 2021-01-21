@@ -75,30 +75,30 @@ final = pd.DataFrame({'Quartet_hmm': Quartet_hmm, 'PathDiffernce_hmm': PathDiffe
 
 
 
-fig = plt.figure(figsize=(10,12))
+fig = plt.figure(figsize=(16,8))
 
-ax = fig.add_subplot(3, 3, 1)
+ax = fig.add_subplot(2, 4, 1)
 ax.set_title("Quartet")
-ax.plot(x,Quartet_hmm, marker='o' ,label= "phyloHMM")
-ax.plot(x,Quartet_b, marker='o' ,label= "Beast")
-ax.plot(x,Quartet_rax, marker='o' ,label= "RaXML")
+ax.plot(x,Quartet_hmm ,label= "phyloHMM")
+ax.plot(x,Quartet_b,label= "Beast")
+ax.plot(x,Quartet_rax,label= "RaXML")
 ax.legend(loc = 'best')
 
-ax = fig.add_subplot(3, 3, 2)
+ax = fig.add_subplot(2, 4, 2)
 ax.set_title("PathDiffernce")
 ax.plot(x,PathDiffernce_hmm, marker='o' ,label= "phyloHMM")
 ax.plot(x,PathDiffernce_b, marker='o' ,label= "Beast")
 ax.plot(x,PathDiffernce_rax, marker='o' ,label= "RaXML")
 ax.legend(loc = 'best')
 
-ax = fig.add_subplot(3, 3, 3)
+ax = fig.add_subplot(2, 4, 3)
 ax.set_title("RF")
 ax.plot(x,RF_hmm, marker='o' ,label= "phyloHMM")
 ax.plot(x,RF_b, marker='o' ,label= "Beast")
 ax.plot(x,RF_rax, marker='o' ,label= "RaXML")
 ax.legend(loc = 'best')
 
-ax = fig.add_subplot(3, 3, 4)
+ax = fig.add_subplot(2, 4, 4)
 ax.set_title("MatchingSplit")
 ax.plot(x,MatchingSplit_hmm, marker='o' ,label= "phyloHMM")
 ax.plot(x,MatchingSplit_b, marker='o' ,label= "Beast")
@@ -106,14 +106,14 @@ ax.plot(x,MatchingSplit_rax, marker='o' ,label= "RaXML")
 ax.legend(loc = 'best')
 
 
-ax = fig.add_subplot(3, 3, 5)
+ax = fig.add_subplot(2, 4, 5)
 ax.set_title("UMAST")
 ax.plot(x,UMAST_hmm, marker='o' ,label= "phyloHMM")
 ax.plot(x,UMAST_b, marker='o' ,label= "Beast")
 ax.plot(x,UMAST_rax, marker='o' ,label= "RaXML")
 ax.legend(loc = 'best')
 
-ax = fig.add_subplot(3, 3, 6)
+ax = fig.add_subplot(2, 4, 6)
 ax.set_title("RFWeighted")
 ax.plot(x,RFWeighted_hmm, marker='o' ,label= "phyloHMM")
 ax.plot(x,RFWeighted_b, marker='o' ,label= "Beast")
@@ -121,33 +121,28 @@ ax.plot(x,RFWeighted_rax, marker='o' ,label= "RaXML")
 ax.legend(loc = 'best')
 
 
-ax = fig.add_subplot(3, 3, 7)
+ax = fig.add_subplot(2, 4, 7)
 ax.set_title("GeoUnrooted")
 ax.plot(x,GeoUnrooted_hmm, marker='o' ,label= "phyloHMM")
 ax.plot(x,GeoUnrooted_b, marker='o' ,label= "Beast")
 ax.plot(x,GeoUnrooted_rax, marker='o' ,label= "RaXML")
 ax.legend(loc = 'best')
 
-plt.savefig("cmpTree.jpeg")
+# plt.savefig("cmpTree.jpeg")
 
 
 
-# fig2 = plt.figure(figsize=(10,12))
-# ax1 = fig2.add_subplot(2, 1, 1)
 hmm = [np.average(Quartet_hmm), np.average(PathDiffernce_hmm) ,np.average(RF_hmm) ,np.average(MatchingSplit_hmm), np.average(UMAST_hmm)]
 raxml = [np.average(Quartet_rax), np.average(PathDiffernce_rax) ,np.average(RF_rax) ,np.average(MatchingSplit_rax), np.average(UMAST_rax)]
 beast = [np.average(Quartet_b), np.average(PathDiffernce_b) ,np.average(RF_b) ,np.average(MatchingSplit_b), np.average(UMAST_b)]
 index = ['Quartet', 'PathDiffernce', 'RF','MatchingSplit', 'UMAST']
-# df = pd.DataFrame({'PhyloHMM': hmm,'RaXml': raxml ,'Beast': beast}, index=index)
-# ax1 =  df.plot.bar(rot=0,figsize=(7,5) ,title='The distances between clonaltree and the other trees')
+
 
 hmm2 = [np.average(RFWeighted_hmm) ,np.average(GeoUnrooted_hmm)]
 raxml2 = [ np.average(RFWeighted_rax) ,np.average(GeoUnrooted_rax)]
 beast2 = [ np.average(RFWeighted_b) ,np.average(GeoUnrooted_b)]
 index2 = [ 'RFWeighted', 'GeoUnrooted']
-# df = pd.DataFrame({'PhyloHMM': hmm,'RaXml': raxml ,'Beast': beast}, index=index)
-#
-# ax2 = df.plot.bar(rot=0,figsize=(7,5) ,title='The distances between clonaltree and the other trees')
+
 
 
 fig2 = plt.figure(figsize=(8,8))

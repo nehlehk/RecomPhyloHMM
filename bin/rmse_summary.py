@@ -1,7 +1,6 @@
 import glob
 import pandas as pd
 import matplotlib.pyplot as plt
-import csv
 import numpy as np
 
 
@@ -14,10 +13,6 @@ files = glob.glob("/home/nehleh/Documents/myTemp/rmse/*.rmse")
 for id,f in enumerate(files):
     x.append(id)
     csv = pd.read_csv(f, sep=';',names=None)
-    # print(csv.iloc[:,3].name)
-    # y1.append('%.4f' %float(csv.iloc[:,1].name))
-    # y2.append('%.4f' %float(csv.iloc[:,2].name))
-    # y3.append('%.4f' %float(csv.iloc[:,3].name))
     y1.append(float(csv.iloc[:,1].name))
     y2.append(float(csv.iloc[:,2].name))
     y3.append(float(csv.iloc[:,3].name))
