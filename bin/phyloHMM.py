@@ -558,9 +558,9 @@ def comparison_plot(RealData,predictionData):
 # **********************************************************************************************************************
 def write_rmse(nu,rmse_real_predict,rmse_clonal_predict,rmse_clonal_real):
     with open('rmse.rmse', mode='w') as rmse_file:
-        rmse_writer = csv.writer(rmse_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        rmse_writer = csv.writer(rmse_file, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
 
-        rmse_writer.writerow(['nu_hmm','rmse_real_predict','rmse_clonal_predict','rmse_clonal_real'])
+        # rmse_writer.writerow(['nu_hmm','rmse_real_predict','rmse_clonal_predict','rmse_clonal_real'])
         rmse_writer.writerow([nu, rmse_real_predict,rmse_clonal_predict,rmse_clonal_real])
 # **********************************************************************************************************************
 
