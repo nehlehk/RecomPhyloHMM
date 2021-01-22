@@ -1,7 +1,7 @@
 nextflow.enable.dsl = 2
 
 
-params.genomeSize = '800'
+params.genomeSize = '5000'
 params.recom_len = '400'
 params.recom_rate = '0.05'
 params.nu_sim = '0.2'
@@ -9,7 +9,7 @@ params.xml_file = '/home/nehleh/Documents/GTR_template.xml'
 params.out = '/home/nehleh/work/results/'
 
 
-genomeNum = Channel.from(7)
+genomeNum = Channel.from(10)
 frequencies = Channel.of(' 0.2184,0.2606,0.3265,0.1946' )
 rates =  Channel.of('0.975070 ,4.088451 ,0.991465 ,0.640018 ,3.840919 ,1')
 nu_hmm = Channel.from(0.03,0.05)
@@ -20,14 +20,10 @@ nu_hmm = Channel.from(0.03,0.05)
 
 process BaciSim {
 
-     publishDir "${params.out}/n_$genome" , mode: 'copy' , saveAs: { filename -> "n_${genome}_$filename" }
-
-     
+     publishDir "${params.out}/n_$genome" , mode: 'copy' , saveAs: { filename -> "n_${genome}_$filename" }   
      
      input:
          each genome 
-
-
 
      output:
          path "BaciSimTrees.tree", emit: BaciSimtrees
@@ -37,7 +33,7 @@ process BaciSim {
          val "${genome}" , emit: n_genome 
      
      """
-       python3.8  /home/nehleh/PhyloCode/python/BaciSim.py -n ${genome} -g ${params.genomeSize} -l ${params.recom_len} -r ${params.recom_rate}  -nu ${params.nu_sim}  
+       python3.8  /home/nehleh/PhyloCode/RecomPhyloHMM/bin/BaciSim.py -n ${genome} -g ${params.genomeSize} -l ${params.recom_len} -r ${params.recom_rate}  -nu ${params.nu_sim}  
         
      """
 }
@@ -65,6 +61,26 @@ process seq_gen {
     """
 }
 
+
+process Gubbins {
+
+    publishDir "${params.out}/n_$genome" , mode: 'copy' , saveAs: { filename -> "n_${genome}_$filename" }
+
+     input:
+        path wholegenome
+        each genome
+        
+    
+    output:
+        path "gubbins.final_tree.tre" , emit: gubbinstree
+    
+    """ 
+    
+     run_gubbins  -r GTRGAMMA -p gubbins   ${wholegenome} 
+      
+    """
+
+}
 
 
 //myGenome = wholegenome.first()
@@ -99,20 +115,25 @@ process phyloHMM {
         path recomlog
         each genome
         each nu_hmm
+//        val p_start
 
      output:
         path 'RecomPartial.xml' , emit: partial_XML 
         path 'originalSeq.xml' , emit: original_XML 
-        path 'rmse.txt' , emit : rmse 
+        path 'rmse.rmse' , emit : rmse 
         path 'PhyloHMM_Recombination.jpeg' , emit: phyloHMMFig
 //        path 'taxa*/.jpeg' , emit : comparefigs
 
      
      """
-       python3.8 /home/nehleh/PhyloCode/pythonProject/RecomPhylo/phyloHMM.py -t ${myRaxML} -a ${wholegenome} -nu ${nu_hmm} -x ${params.xml_file} -l ${recomlog} > rmse.txt
+       python3.8 /home/nehleh/PhyloCode/RecomPhyloHMM/bin/phyloHMM.py -t ${myRaxML} -a ${wholegenome} -nu ${nu_hmm} -x ${params.xml_file} -l ${recomlog} 
         
      """
 }
+
+
+
+
 
 process Beast_alignment {
 
@@ -170,7 +191,7 @@ process convertor_SeqTree {
          path 'beastSeqTree.newick' , emit : beastTree
          
      """
-       python3.8 /home/nehleh/PhyloCode/pythonProject/RecomPhylo/NexusToNewick.py -t ${SeqTree} -o 'beastSeqTree.newick'
+       python3.8 /home/nehleh/PhyloCode/RecomPhyloHMM/bin/NexusToNewick.py -t ${SeqTree} -o 'beastSeqTree.newick'
         
      """
 }
@@ -237,7 +258,7 @@ process convertor_ourTree {
          path 'beastHMMTree.newick' , emit:  beastHMMTree
          
      """
-       python3.8 /home/nehleh/PhyloCode/pythonProject/RecomPhylo/NexusToNewick.py -t ${beastOurTree} -o 'beastHMMTree.newick'
+       python3.8 /home/nehleh/PhyloCode/RecomPhyloHMM/bin/NexusToNewick.py -t ${beastOurTree} -o 'beastHMMTree.newick'
         
      """
 }
@@ -251,6 +272,7 @@ process mergeTreeFiles {
          path beastHMMTree
          path myRaxML 
          path beastTree
+         path gubbinstree
          each genome
          each nu_hmm
          
@@ -259,7 +281,7 @@ process mergeTreeFiles {
          path 'allOtherTrees.newick' , emit: allOtherTrees
      
      """
-       python3.8 /home/nehleh/PhyloCode/pythonProject/RecomPhylo/mergeFiles.py ${beastHMMTree}  ${myRaxML}  ${beastTree} > allOtherTrees.newick
+       python3.8 /home/nehleh/PhyloCode/RecomPhyloHMM/bin/mergeFiles.py ${beastHMMTree}  ${myRaxML}  ${beastTree} ${gubbinstree} > allOtherTrees.newick
        
      """
 
@@ -280,12 +302,12 @@ process TreeCmp {
          
          
      output:
-         path 'TreeCmpResult' , emit: Comparison
+         path 'TreeCmpResult.result' , emit: Comparison
      
          
     
      """
-       java -jar /home/nehleh/Documents/0_Research/Software/TreeCmp_v2.0-b76/bin/treeCmp.jar  -r ${clonaltree}  -i ${allOtherTrees} -d qt pd rf ms um rfw gdu -o TreeCmpResult -W
+       java -jar /home/nehleh/Documents/0_Research/Software/TreeCmp_v2.0-b76/bin/treeCmp.jar  -r ${clonaltree}  -i ${allOtherTrees} -d qt pd rf ms um rfw gdu -o TreeCmpResult.result -W
      """
 
 
@@ -302,6 +324,8 @@ workflow {
     
     seq_gen(BaciSim.out.BaciSimtrees,frequencies,rates,BaciSim.out.n_genome)
     
+    Gubbins(seq_gen.out.wholegenome,BaciSim.out.n_genome)
+
     get_raxml_tree(seq_gen.out.wholegenome,BaciSim.out.n_genome)
     
     phyloHMM(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,BaciSim.out.recomlog,BaciSim.out.n_genome,nu_hmm)
@@ -318,10 +342,8 @@ workflow {
     
     convertor_ourTree(treeannotator_partial.out.beastOurTree,BaciSim.out.n_genome,nu_hmm)
     
-    mergeTreeFiles(convertor_ourTree.out.beastHMMTree,get_raxml_tree.out.myRaxML,convertor_SeqTree.out.beastTree,BaciSim.out.n_genome,nu_hmm )
+    mergeTreeFiles(convertor_ourTree.out.beastHMMTree,get_raxml_tree.out.myRaxML,convertor_SeqTree.out.beastTree,Gubbins.out.gubbinstree,BaciSim.out.n_genome,nu_hmm )
 
     TreeCmp(BaciSim.out.clonaltree,mergeTreeFiles.out.allOtherTrees,BaciSim.out.n_genome,nu_hmm)
        
 }
-
-
