@@ -23,9 +23,9 @@ for id,f in enumerate(files):
 
 fig = plt.figure(figsize=(6,6))
 ax1 = fig.add_subplot(2, 1, 1)
-ax1.plot(x,y1, marker='o' ,label= "rmse_real_predict")
-ax1.plot(x,y2, marker='o' ,label= "rmse_clonal_predict")
-ax1.plot(x,y3, marker='o' ,label= "rmse_clonal_real")
+ax1.plot(x,y1, marker='.' ,label= "rmse_real_predict")
+ax1.plot(x,y2, marker='.' ,label= "rmse_clonal_predict")
+ax1.plot(x,y3, marker='.' ,label= "rmse_clonal_real")
 ax1.set_title('RMSE values for different dataset')
 ax1.legend(loc='best')
 

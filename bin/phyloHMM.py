@@ -563,6 +563,18 @@ def write_rmse(nu,rmse_real_predict,rmse_clonal_predict,rmse_clonal_real):
         # rmse_writer.writerow(['nu_hmm','rmse_real_predict','rmse_clonal_predict','rmse_clonal_real'])
         rmse_writer.writerow([nu, rmse_real_predict,rmse_clonal_predict,rmse_clonal_real])
 # **********************************************************************************************************************
+def CFML_recombination(CFML_recomLog):
+    CFMLData = np.zeros((alignment_len, tips_num))
+    df = pd.read_csv(CFML_recomLog,sep='\t', engine='python')
+    for i in range(len(df)):
+        s = df['Beg'][i]
+        e = df['End'][i]
+        node = df['Node'][i]
+        CFMLData[s:e,int(give_taxon_index(tree, node))] = 1
+
+    return CFMLData
+# **********************************************************************************************************************
+
 
 
 if __name__ == "__main__":
@@ -588,6 +600,7 @@ if __name__ == "__main__":
     parser.add_argument('-s', "--startProb", type=list, default= [0.85, 0.05, 0.05, 0.05],help='frequencies')
     parser.add_argument('-m', "--transmat", type=list, default= [[0.997, 0.001, 0.001, 0.001],[0.001, 0.997, 0.001, 0.001],[0.001, 0.001, 0.997, 0.001],[0.001, 0.001, 0.001, 0.997]], help='rates')
     parser.add_argument('-x', "--xmlFile", type=str, required=True, help='xmlFile')
+    parser.add_argument('-c', "--cfmlFile", type=str, required=True, help='cfmlFile')
     args = parser.parse_args()
 
     tree_path = args.treeFile
@@ -599,6 +612,7 @@ if __name__ == "__main__":
     nu = args.nuHmm
     p_start = args.startProb
     p_trans = args.transmat
+    cfml_path = args.cfmlFile
 
 
 
@@ -633,17 +647,18 @@ if __name__ == "__main__":
     make_beast_xml_original(tree,xml_path)
 
     realData = real_recombination(recomLog)
-    predictDate = predict_recombination(tipdata)
+    phyloHMMData = predict_recombination(tipdata)
     clonalData = np.zeros((alignment_len, tips_num))
+    CFMLData = CFML_recombination(cfml_path)
 
-    rmse_real_predict= calc_rmse(realData,predictDate)
-    rmse_clonal_predict = calc_rmse(clonalData, predictDate)
-    rmse_clonal_real = calc_rmse(clonalData, realData)
+    rmse_real_phyloHMM= calc_rmse(realData,phyloHMMData)
+    rmse_clonal_phyloHMM = calc_rmse(clonalData, phyloHMMData)
+    # rmse_clonal_real = calc_rmse(clonalData, realData)
+    rmse_real_CFML = calc_rmse(realData,CFMLData)
 
-    # print("rmse_real_predict:",rmse_real_predict, "     rmse_clonal_predict:",rmse_clonal_predict , "       rmse_clonal_real:",rmse_clonal_real)
-    write_rmse(nu,rmse_real_predict, rmse_clonal_predict, rmse_clonal_real)
+    write_rmse(nu,rmse_real_phyloHMM, rmse_clonal_phyloHMM, rmse_real_CFML)
 
-    comparison_plot(realData, predictDate)
+    comparison_plot(realData, phyloHMMData)
 
 
 
