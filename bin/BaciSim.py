@@ -12,7 +12,7 @@ import argparse
 
 
 # ----------------------------------------------------------------------------------------------------------------------
-def ex_recom_maker(tree ,node ,nu):
+def ex_recom_maker(tree ,node ,nu ,taxa):
     rand_nu = np.random.normal(nu,0.01)
     co_recom = rand_nu/2
     new_tree = dendropy.Tree(taxon_namespace=taxa)
@@ -696,7 +696,7 @@ def make_clonaltree(tips_number,max_tMRCA):
     myfile.write(clonal_tree)
     myfile.close()
 
-    return tree, clonal_tree
+    return tree, clonal_tree, taxa
 # ----------------------------------------------------------------------------------------------------------------------
 def give_recom_num(tree,recom_rate,alignment_len):
     # Poisson( tree.sum() * rel_recomb_rate_per_site * alignment_length)
@@ -725,7 +725,7 @@ def make_nodes_weight(tree,status):
 
     return node_labels,node_weight
 # ----------------------------------------------------------------------------------------------------------------------
-def recom_on_alignment(recom_num,recom_len,alignment_len,clonal_tree,node_labels,node_weight,nu_ex):
+def recom_on_alignment(recom_num,recom_len,alignment_len,clonal_tree,node_labels,node_weight,nu_ex,taxa):
     ideal_gap = int(alignment_len/recom_num)
     my_trees = []
     nodes = []
@@ -746,7 +746,7 @@ def recom_on_alignment(recom_num,recom_len,alignment_len,clonal_tree,node_labels
           recomlens.append(r_len)
           ends.append(start_pos + r_len)
           recom_node = tree.find_node_with_label(str(int(random_tip)))
-          recom_tree= ex_recom_maker(tree,recom_node,nu_ex) # make external recombination
+          recom_tree= ex_recom_maker(tree,recom_node,nu_ex,taxa) # make external recombination
           my_trees.append(recom_tree)
           starting_falg = True
 
@@ -857,7 +857,7 @@ def generate_final_report(df,alignment_len,clonal_tree,tips_number):
         else:
             end_tree = remove_internal_labels(final['final_tree'][id])
         tmp = "[" + str(final['len'][id]) + "]" + " " + end_tree
-        print(tmp)
+        # print(tmp)
         myfile.write("%s" % tmp)
 
     myfile.close()
@@ -877,7 +877,7 @@ if __name__ == "__main__":
     parser.add_argument('-l', "--recom_len", type=int, default=500, help='Sets the average length of an external recombinant interval, (default is 500)')
     parser.add_argument('-r', "--recom_rate",type=float, default=0.05, help='Sets the site-specific rate of external (between species) recombination, (default is 0.05)')
     parser.add_argument('-nu',"--nu" ,  type=float, default=0.2, help='nu')
-    parser.add_argument('-s',"--status" ,  type=int, default=0, help='0 is just leaves, 1 is for both internal nodes and leaves and 2 is just internal nodes')
+    parser.add_argument('-s',"--status" ,  type=int, default=2, help='0 is just leaves, 1 is for both internal nodes and leaves and 2 is just internal nodes')
 
     # Read arguments from command line
     args = parser.parse_args()
@@ -892,13 +892,17 @@ if __name__ == "__main__":
     max_tMRCA= 0.01
 
 
-    tree , clonal_tree= make_clonaltree(tips_number, max_tMRCA)
+    tree, clonal_tree, taxa = make_clonaltree(tips_number, max_tMRCA)
     nodes_number = len(tree.nodes())
     recom_num = give_recom_num(tree,recom_rate,alignment_len)
     node_labels,node_weight = make_nodes_weight(tree, status)
-    df,all_data = recom_on_alignment(recom_num, recom_len, alignment_len, clonal_tree, node_labels, node_weight, nu_ex)
+    df,all_data = recom_on_alignment(recom_num, recom_len, alignment_len, clonal_tree, node_labels, node_weight, nu_ex, taxa)
+    print(df)
     make_recom_fig(alignment_len, nodes_number, tips_number, clonal_tree)
     final_report = generate_final_report(df, alignment_len, clonal_tree, tips_number)
+
+    print(final_report)
+    plt.show()
 
 
 
