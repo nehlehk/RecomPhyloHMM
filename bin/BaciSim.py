@@ -9,59 +9,7 @@ from collections import Counter
 import argparse
 
 
-if __name__ == "__main__":
 
-    parser=argparse.ArgumentParser(
-        description='''You did not specify any parameters. You must at least specify the number of chromosomes sampled and the sequence length. ''',
-        epilog="""All's well that ends well.""")
-    parser.add_argument('-n', "--tips_number", type=int, default=10 , help='Sets the number of isolates (default is 10)')
-    parser.add_argument('-g', "--alignment_len", type=int, default=5000 , help='Sets the number and lengths of fragments of genetic material (default is 5000)')
-    parser.add_argument('-l', "--recom_len", type=int, default=500, help='Sets the average length of an external recombinant interval, (default is 500)')
-    parser.add_argument('-r', "--recom_rate",type=float, default=0.05, help='Sets the site-specific rate of external (between species) recombination, (default is 0.05)')
-    parser.add_argument('-nu',"--nu" ,  type=float, default=0.2, help='nu')
-    parser.add_argument('-t',"--taxa" ,  type=bool, default=1, help='recombination would happend on taxa')
-    parser.add_argument('-i',"--internalNode" ,  type=bool, default=0, help='recombination would happend on internal nodes')
-
-    # Read arguments from command line
-    args = parser.parse_args()
-
-    tips_number = args.tips_number
-    alignment_len = args.alignment_len
-    recom_len = args.recom_len
-    recom_rate = args.recom_rate
-    nu_ex = args.nu
-    internal = args.internalNode
-    leaf = args.taxa
-
-    threshold_len = 200
-    max_tMRCA= 0.01
-
-
-taxon_list= []
-for i in range(tips_number):
-  taxon_list.append(str(i))
-taxa = dendropy.TaxonNamespace(taxon_list)
-tree = treesim.pure_kingman_tree(taxon_namespace=taxa,pop_size=3)
-nodes_number = len(tree.nodes())
-
-
-t = tree.max_distance_from_root()
-normal_co = t/ max_tMRCA
-tree.scale_edges(1/normal_co)
-clonal_tree = tree.as_string(schema="newick")
-print(tree.as_string(schema="newick"))
-print(tree.as_ascii_plot())
-clonal_tree = clonal_tree.replace('\n',"")
-
-myfile = open('./clonaltree.tree', 'w')
-myfile.write(clonal_tree)
-myfile.close()
-
-# ----------------------------------------------------------------------------------------------------------------------
-# Poisson( tree.sum() * rel_recomb_rate_per_site * alignment_length)
-recom_num =  np.random.poisson(tree.length() * recom_rate * alignment_len)
-# ----------------------------------------------------------------------------------------------------------------------
-# print(recom_num)
 
 # ----------------------------------------------------------------------------------------------------------------------
 def ex_recom_maker(tree ,node ,nu):
@@ -127,10 +75,7 @@ def ex_recom_maker(tree ,node ,nu):
         attached_node.add_child(newborn)
         recombination_trees.append(tree.as_string(schema="newick"))
     #*************************************************************************
-
     return new_tree.as_string(schema="newick")
-
-
 # ----------------------------------------------------------------------------------------------------------------------
 def set_index(tree):
     for node in tree.postorder_node_iter():
@@ -146,7 +91,6 @@ def set_index(tree):
       else:
           node.index = node.taxon.label
           node.label = str(node.index)
-
 # ----------------------------------------------------------------------------------------------------------------------
 def give_descendents(tree,node_index,result):
   if node_index >= tips_number:
@@ -171,7 +115,6 @@ def give_equivalent_node_byedge(recomtree):
   for node in recomtree.postorder_node_iter():
     if node.edge_length == m:
       return node.label,m
-
 # ----------------------------------------------------------------------------------------------------------------------
 def give_equivalent_node(recomtree):
   e = []
@@ -186,7 +129,6 @@ def give_equivalent_node(recomtree):
       return node.label,m
     elif node.edge_length == m and node.is_internal():
       return node.label,node.distance_from_tip() + m
-
 # ----------------------------------------------------------------------------------------------------------------------
 def my_mrca(tree,tips):
   pdm = tree.phylogenetic_distance_matrix()
@@ -296,165 +238,6 @@ def my_merge_trees(recomtrees , recomnodes):
 
   return maintree.as_string(schema="newick")
 # ----------------------------------------------------------------------------------------------------------------------
-
-
-set_index(tree)
-node_labels = []
-node_weight = []
-for node in tree.postorder_node_iter():
-  if not node==tree.seed_node:
-    if internal and leaf:
-      node_labels.append(node.index)
-      node_weight.append(node.edge_length /tree.length())
-    elif leaf:
-      if node.is_leaf():
-        node_labels.append(node.index)
-        node_weight.append(node.edge_length /tree.length())
-    elif external:
-      if node.is_internal():
-        node_labels.append(node.index)
-        node_weight.append(node.edge_length /tree.length())
-
-if recom_num == 0:
-    recom_num = 1
-
-ideal_gap = int(alignment_len/recom_num)
-my_trees = []
-nodes = []
-starts = []
-ends = []
-recomlens = []
-for recom_id in range(int(recom_num)):
-  starting_falg = False
-  tree = Tree.get_from_string(clonal_tree,schema='newick')
-  set_index(tree)
-  while not starting_falg:
-    random_tip = np.random.choice(node_labels,1,node_weight)
-    start_pos = random.randint(ideal_gap*recom_id, ideal_gap * (recom_id+1) )
-    r_len = random.randint(threshold_len, recom_len + threshold_len)
-    if (start_pos + r_len <= alignment_len) :
-      nodes.append(random_tip)
-      starts.append(start_pos)
-      recomlens.append(r_len)
-      ends.append(start_pos + r_len)
-      recom_node = tree.find_node_with_label(str(int(random_tip)))
-      recom_tree= ex_recom_maker(tree,recom_node,nu_ex) # make external recombination
-      my_trees.append(recom_tree)
-      starting_falg = True
-
-
-all_data = {'nodes':nodes , 'start':starts , 'end':ends, 'len':recomlens , 'tree':my_trees}
-df = pd.DataFrame(all_data)
-
-
-# print(df)
-
-# ----------------------------------------------------------------------------------------------------------------------
-df.to_csv('Recombination_Log.txt', sep='\t' , header= True)
-
-# ----------------------------------------------------------------------------------------------------------------------
-output = np.zeros((alignment_len, nodes_number))
-for i in range(nodes_number):
-  for j in range(recom_num):
-    if int(all_data['nodes'][j]) == i:
-      s = int(all_data['start'][j])
-      e = int(all_data['end'][j])
-      output[s:e,i] = 1
-
-
-
-fig = plt.figure(figsize=(tips_number,tips_number/2))
-color=['red', 'green' ,'purple', 'blue','black']
-clonaltree = Tree.get_from_string(clonal_tree,schema='newick')
-set_index(clonaltree)
-for i in range(nodes_number):
-  ax = fig.add_subplot(nodes_number,1,i+1)
-  if i >= tips_number:
-    desc = set()
-    d = give_descendents(clonaltree,i,desc)
-    ax.plot(output[:,i] ,label= str(i)+' is mrca:'+ str(d) ,color = color[i%5])
-  else:
-    ax.plot(output[:,i] ,label= i ,color = color[i%5])
-  ax.legend(loc = 2 , bbox_to_anchor=(0.95, 1.5))
-  ax.set_frame_on(False)
-  ax.axis('off')
-
-ax.axis('on')
-ax.set_yticklabels([])
-plt.savefig("BaciSim_Recombination.jpeg")
-
-
-
-# ----------------------------------------------------------------------------------------------------------------------
-# endpoints = df.stack().sort_values().reset_index(drop=True)
-endpoints = df[['start', 'end']].stack().sort_values().reset_index(drop=True)
-intervals = pd.DataFrame({'start': endpoints.shift().fillna(0), 'end': endpoints}).astype(int)
-# construct the list of intervals from the endpoints
-intervals['intv'] = [pd.Interval(a, b) for a, b in zip(intervals.start, intervals.end)]
-# these are the original intervals
-orig_invt = pd.arrays.IntervalArray([pd.Interval(a, b) for a, b in zip(df.start, df.end)])
-# walk through the intervals and compute the intersections
-intervals['total'] = intervals.intv.apply(lambda x: orig_invt.overlaps(x).sum())
-bounds = np.unique(df[['start', 'end']])
-if 0 not in bounds: bounds = np.insert(bounds, 0, 0)
-end = alignment_len
-bounds = np.append(bounds, end)
-total = []
-interval = []
-stat = []
-final_len = []
-nodes = []
-r_trees = []
-final_tree = []
-clonaltree = Tree.get_from_string(clonal_tree, schema='newick')
-set_index(clonaltree)
-children = []
-for i in range(len(bounds) - 1):
-    # Find which intervals fit
-    ix = (df['start'] <= bounds[i]) & (df['end'] >= bounds[i + 1])
-    final_len.append(bounds[i + 1] - bounds[i])
-    total.append(np.sum(ix))
-
-    interval.append(df[ix].values.tolist())
-
-    temp_node = []
-    temp_tree = []
-    kids = []
-    temp = df[ix].values.tolist()
-    for j in range(len(temp)):
-        temp_node.append(int(temp[j][0]))
-        if int(temp[j][0]) >= tips_number:
-            desc = set()
-            d = give_descendents(clonaltree, int(temp[j][0]), desc)
-            kids.append(d)
-        else:
-            kids.append("")
-        temp_tree.append(temp[j][4])
-    nodes.append(temp_node)
-    r_trees.append(temp_tree)
-    children.append(kids)
-
-    if (np.sum(ix) == 0):
-        stat.append('clonal')
-        final_tree.append(clonal_tree)
-    elif (np.sum(ix) == 1):
-        stat.append("recom")
-        final_tree.append(r_trees[i])
-    else:
-        stat.append("overlap")
-        # final_tree.append("")
-        final_tree.append(my_merge_trees(r_trees[i],nodes[i]))
-
-final = pd.DataFrame({'start': bounds[:-1], 'end': bounds[1:] ,'nodes':nodes, 'descendants':children,  'len':final_len , 'status':stat ,'final_tree': final_tree ,'total': total ,'tree':r_trees })
-
-
-# ----------------------------------------------------------------------------------------------------------------------
-# print(final)
-# ----------------------------------------------------------------------------------------------------------------------
-
-final[['nodes','start','end', 'len' ,'descendants', 'status']].to_csv('BaciSim_Log.txt', sep='\t' , header= True)
-
-
 # ----------------------------------------------------------------------------------------------------------------------
 myfile = open('./BaciSimTrees.tree', 'w')
 total = 0
@@ -911,4 +694,223 @@ def resolve_parent_nodes(s_equ, tree, temptree):
 
     return desc
 # ----------------------------------------------------------------------------------------------------------------------
-# plt.show()
+
+
+if __name__ == "__main__":
+
+    parser=argparse.ArgumentParser(
+        description='''You did not specify any parameters. You must at least specify the number of chromosomes sampled and the sequence length. ''',
+        epilog="""All's well that ends well.""")
+    parser.add_argument('-n', "--tips_number", type=int, default=10 , help='Sets the number of isolates (default is 10)')
+    parser.add_argument('-g', "--alignment_len", type=int, default=5000 , help='Sets the number and lengths of fragments of genetic material (default is 5000)')
+    parser.add_argument('-l', "--recom_len", type=int, default=500, help='Sets the average length of an external recombinant interval, (default is 500)')
+    parser.add_argument('-r', "--recom_rate",type=float, default=0.05, help='Sets the site-specific rate of external (between species) recombination, (default is 0.05)')
+    parser.add_argument('-nu',"--nu" ,  type=float, default=0.2, help='nu')
+    parser.add_argument('-t',"--taxa" ,  type=bool, default=1, help='recombination would happend on taxa')
+    parser.add_argument('-i',"--internalNode" ,  type=bool, default=0, help='recombination would happend on internal nodes')
+
+    # Read arguments from command line
+    args = parser.parse_args()
+
+    tips_number = args.tips_number
+    alignment_len = args.alignment_len
+    recom_len = args.recom_len
+    recom_rate = args.recom_rate
+    nu_ex = args.nu
+    internal = args.internalNode
+    leaf = args.taxa
+
+    threshold_len = 200
+    max_tMRCA= 0.01
+
+
+taxon_list= []
+for i in range(tips_number):
+  taxon_list.append(str(i))
+taxa = dendropy.TaxonNamespace(taxon_list)
+tree = treesim.pure_kingman_tree(taxon_namespace=taxa,pop_size=3)
+nodes_number = len(tree.nodes())
+
+
+t = tree.max_distance_from_root()
+normal_co = t/ max_tMRCA
+tree.scale_edges(1/normal_co)
+clonal_tree = tree.as_string(schema="newick")
+print(tree.as_string(schema="newick"))
+print(tree.as_ascii_plot())
+clonal_tree = clonal_tree.replace('\n',"")
+
+myfile = open('./clonaltree.tree', 'w')
+myfile.write(clonal_tree)
+myfile.close()
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Poisson( tree.sum() * rel_recomb_rate_per_site * alignment_length)
+recom_num =  np.random.poisson(tree.length() * recom_rate * alignment_len)
+# ----------------------------------------------------------------------------------------------------------------------
+# print(recom_num)
+
+
+
+
+
+
+
+set_index(tree)
+node_labels = []
+node_weight = []
+for node in tree.postorder_node_iter():
+  if not node==tree.seed_node:
+    if internal and leaf:
+      node_labels.append(node.index)
+      node_weight.append(node.edge_length /tree.length())
+    elif leaf:
+      if node.is_leaf():
+        node_labels.append(node.index)
+        node_weight.append(node.edge_length /tree.length())
+    elif external:
+      if node.is_internal():
+        node_labels.append(node.index)
+        node_weight.append(node.edge_length /tree.length())
+
+if recom_num == 0:
+    recom_num = 1
+
+ideal_gap = int(alignment_len/recom_num)
+my_trees = []
+nodes = []
+starts = []
+ends = []
+recomlens = []
+for recom_id in range(int(recom_num)):
+  starting_falg = False
+  tree = Tree.get_from_string(clonal_tree,schema='newick')
+  set_index(tree)
+  while not starting_falg:
+    random_tip = np.random.choice(node_labels,1,node_weight)
+    start_pos = random.randint(ideal_gap*recom_id, ideal_gap * (recom_id+1) )
+    r_len = random.randint(threshold_len, recom_len + threshold_len)
+    if (start_pos + r_len <= alignment_len) :
+      nodes.append(random_tip)
+      starts.append(start_pos)
+      recomlens.append(r_len)
+      ends.append(start_pos + r_len)
+      recom_node = tree.find_node_with_label(str(int(random_tip)))
+      recom_tree= ex_recom_maker(tree,recom_node,nu_ex) # make external recombination
+      my_trees.append(recom_tree)
+      starting_falg = True
+
+
+all_data = {'nodes':nodes , 'start':starts , 'end':ends, 'len':recomlens , 'tree':my_trees}
+df = pd.DataFrame(all_data)
+
+
+# print(df)
+
+# ----------------------------------------------------------------------------------------------------------------------
+df.to_csv('Recombination_Log.txt', sep='\t' , header= True)
+
+# ----------------------------------------------------------------------------------------------------------------------
+output = np.zeros((alignment_len, nodes_number))
+for i in range(nodes_number):
+  for j in range(recom_num):
+    if int(all_data['nodes'][j]) == i:
+      s = int(all_data['start'][j])
+      e = int(all_data['end'][j])
+      output[s:e,i] = 1
+
+
+
+fig = plt.figure(figsize=(tips_number,tips_number/2))
+color=['red', 'green' ,'purple', 'blue','black']
+clonaltree = Tree.get_from_string(clonal_tree,schema='newick')
+set_index(clonaltree)
+for i in range(nodes_number):
+  ax = fig.add_subplot(nodes_number,1,i+1)
+  if i >= tips_number:
+    desc = set()
+    d = give_descendents(clonaltree,i,desc)
+    ax.plot(output[:,i] ,label= str(i)+' is mrca:'+ str(d) ,color = color[i%5])
+  else:
+    ax.plot(output[:,i] ,label= i ,color = color[i%5])
+  ax.legend(loc = 2 , bbox_to_anchor=(0.95, 1.5))
+  ax.set_frame_on(False)
+  ax.axis('off')
+
+ax.axis('on')
+ax.set_yticklabels([])
+plt.savefig("BaciSim_Recombination.jpeg")
+
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# endpoints = df.stack().sort_values().reset_index(drop=True)
+endpoints = df[['start', 'end']].stack().sort_values().reset_index(drop=True)
+intervals = pd.DataFrame({'start': endpoints.shift().fillna(0), 'end': endpoints}).astype(int)
+# construct the list of intervals from the endpoints
+intervals['intv'] = [pd.Interval(a, b) for a, b in zip(intervals.start, intervals.end)]
+# these are the original intervals
+orig_invt = pd.arrays.IntervalArray([pd.Interval(a, b) for a, b in zip(df.start, df.end)])
+# walk through the intervals and compute the intersections
+intervals['total'] = intervals.intv.apply(lambda x: orig_invt.overlaps(x).sum())
+bounds = np.unique(df[['start', 'end']])
+if 0 not in bounds: bounds = np.insert(bounds, 0, 0)
+end = alignment_len
+bounds = np.append(bounds, end)
+total = []
+interval = []
+stat = []
+final_len = []
+nodes = []
+r_trees = []
+final_tree = []
+clonaltree = Tree.get_from_string(clonal_tree, schema='newick')
+set_index(clonaltree)
+children = []
+for i in range(len(bounds) - 1):
+    # Find which intervals fit
+    ix = (df['start'] <= bounds[i]) & (df['end'] >= bounds[i + 1])
+    final_len.append(bounds[i + 1] - bounds[i])
+    total.append(np.sum(ix))
+
+    interval.append(df[ix].values.tolist())
+
+    temp_node = []
+    temp_tree = []
+    kids = []
+    temp = df[ix].values.tolist()
+    for j in range(len(temp)):
+        temp_node.append(int(temp[j][0]))
+        if int(temp[j][0]) >= tips_number:
+            desc = set()
+            d = give_descendents(clonaltree, int(temp[j][0]), desc)
+            kids.append(d)
+        else:
+            kids.append("")
+        temp_tree.append(temp[j][4])
+    nodes.append(temp_node)
+    r_trees.append(temp_tree)
+    children.append(kids)
+
+    if (np.sum(ix) == 0):
+        stat.append('clonal')
+        final_tree.append(clonal_tree)
+    elif (np.sum(ix) == 1):
+        stat.append("recom")
+        final_tree.append(r_trees[i])
+    else:
+        stat.append("overlap")
+        # final_tree.append("")
+        final_tree.append(my_merge_trees(r_trees[i],nodes[i]))
+
+final = pd.DataFrame({'start': bounds[:-1], 'end': bounds[1:] ,'nodes':nodes, 'descendants':children,  'len':final_len , 'status':stat ,'final_tree': final_tree ,'total': total ,'tree':r_trees })
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# print(final)
+# ----------------------------------------------------------------------------------------------------------------------
+
+final[['nodes','start','end', 'len' ,'descendants', 'status']].to_csv('BaciSim_Log.txt', sep='\t' , header= True)
+
+
+
