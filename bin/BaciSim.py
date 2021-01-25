@@ -8,33 +8,33 @@ import pandas as pd
 from collections import Counter
 import argparse
 
-parser=argparse.ArgumentParser(
-    description='''You did not specify any parameters. You must at least specify the number of chromosomes sampled and the sequence length. ''',
-    epilog="""All's well that ends well.""")
 
-# Adding optional argument
+if __name__ == "__main__":
 
-parser.add_argument('-n', "--tips_number", type=int, default=10 , help='Sets the number of isolates (default is 10)')
-parser.add_argument('-g', "--alignment_len", type=int, default=5000 , help='Sets the number and lengths of fragments of genetic material (default is 5000)')
-parser.add_argument('-l', "--recom_len", type=int, default=500, help='Sets the average length of an external recombinant interval, (default is 500)')
-parser.add_argument('-r', "--recom_rate",type=float, default=0.05, help='Sets the site-specific rate of external (between species) recombination, (default is 0.05)')
-parser.add_argument('-nu',"--nu" ,  type=float, default=0.2, help='nu')
-parser.add_argument('-t',"--taxa" ,  type=bool, default=1, help='recombination would happend on taxa')
-parser.add_argument('-i',"--internalNode" ,  type=bool, default=0, help='recombination would happend on internal nodes')
+    parser=argparse.ArgumentParser(
+        description='''You did not specify any parameters. You must at least specify the number of chromosomes sampled and the sequence length. ''',
+        epilog="""All's well that ends well.""")
+    parser.add_argument('-n', "--tips_number", type=int, default=10 , help='Sets the number of isolates (default is 10)')
+    parser.add_argument('-g', "--alignment_len", type=int, default=5000 , help='Sets the number and lengths of fragments of genetic material (default is 5000)')
+    parser.add_argument('-l', "--recom_len", type=int, default=500, help='Sets the average length of an external recombinant interval, (default is 500)')
+    parser.add_argument('-r', "--recom_rate",type=float, default=0.05, help='Sets the site-specific rate of external (between species) recombination, (default is 0.05)')
+    parser.add_argument('-nu',"--nu" ,  type=float, default=0.2, help='nu')
+    parser.add_argument('-t',"--taxa" ,  type=bool, default=1, help='recombination would happend on taxa')
+    parser.add_argument('-i',"--internalNode" ,  type=bool, default=0, help='recombination would happend on internal nodes')
 
-# Read arguments from command line
-args = parser.parse_args()
+    # Read arguments from command line
+    args = parser.parse_args()
 
-tips_number = args.tips_number
-alignment_len = args.alignment_len
-recom_len = args.recom_len
-recom_rate = args.recom_rate
-nu_ex = args.nu
-internal = args.internalNode
-leaf = args.taxa
+    tips_number = args.tips_number
+    alignment_len = args.alignment_len
+    recom_len = args.recom_len
+    recom_rate = args.recom_rate
+    nu_ex = args.nu
+    internal = args.internalNode
+    leaf = args.taxa
 
-threshold_len = 200
-max_tMRCA= 0.01
+    threshold_len = 200
+    max_tMRCA= 0.01
 
 
 taxon_list= []
