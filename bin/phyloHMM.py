@@ -16,6 +16,7 @@ from sklearn.metrics import mean_squared_error
 import math
 import argparse
 import csv
+import re
 
 
 
@@ -373,6 +374,7 @@ def phylohmm(tree,alignment,nu,p_start,p_trans):
         model.startprob_ = p_start
         model.transmat_ = p_trans
 
+
         p = model.predict_proba(X)
 
         posterior.append(p)
@@ -490,36 +492,38 @@ def make_beast_xml_original(tree,xml_path):
     my_xml.write('originalSeq.xml' ,encoding="utf-8", xml_declaration=True)
 # **********************************************************************************************************************
 def give_taxon_index(tree,taxa):
-    node_mapping = np.zeros((tips_num,2))
+    node_mapping = np.zeros((nodes_number,2))
     i = 0
     for node in tree.postorder_node_iter():
       if node.is_leaf():
         node_mapping[i][0] = int(str(node.taxon.label))
-        node_mapping[i][1] = int(str(node.index))
-        i = i+1
+      else:
+        node_mapping[i][0] = int(str(node.index))
+      node_mapping[i][1] = int(str(node.index))
+      i = i+1
 
     for i in range(len(node_mapping)):
-      if node_mapping[i][0] == taxa:
+      if int(node_mapping[i][0]) == int(taxa):
         return node_mapping[i][1]
 # **********************************************************************************************************************
 def nodes_separation(nodes):
-  i = 1
-  mynodes = []
-  while i < len(nodes):
-    mynodes.append(int(nodes[:][i]))
-    i = i + 3
-
+  nodes = str(nodes)
+  nodes = nodes[1:-1]
+  mynodes = nodes.split(",")
   return mynodes
 # **********************************************************************************************************************
 def real_recombination(recomLog):
-    realData = np.zeros((alignment_len, tips_num))
+    realData = np.zeros((alignment_len, nodes_number))
     df = pd.read_csv(recomLog,sep='\t', engine='python')
+    # print(df)
     recom = df.loc[df['status'] != 'clonal']
     recom = recom.reset_index(drop=True)
     for i in range(len(recom)):
         s = recom['start'][i]
         t = recom['end'][i]
+        # print(recom['nodes'][i])
         nodes = nodes_separation(recom['nodes'][i])
+        # print(nodes)
         for i in range(len(nodes)):
             mynode = int(give_taxon_index(tree, nodes[i]))
             realData[s:t, mynode] = 1
@@ -530,7 +534,8 @@ def predict_recombination(tipdata):
     predictionData = np.zeros((alignment_len, tips_num))
     for site in range(alignment_len):
         for i in range(tips_num):
-            predictionData[site, i] = max(item for item in tipdata[site, i] if item != 1)
+            # predictionData[site, i] = max(item for item in tipdata[site, i] if item != 1)
+            predictionData[site, i] = round(max(item for item in tipdata[site, i] if item != 1))
 
     return predictionData
 # **********************************************************************************************************************
@@ -556,20 +561,23 @@ def comparison_plot(RealData,predictionData):
         ax.legend(loc=1, bbox_to_anchor=(1.23, 1.1))
         plt.savefig("taxa" + str(i) + ".jpeg")
 # **********************************************************************************************************************
-def write_rmse(nu,rmse_real_predict,rmse_clonal_predict,rmse_clonal_real):
+def write_rmse(nu,rmse_real_predict,rmse_real_CFML):
     with open('rmse.rmse', mode='w') as rmse_file:
         rmse_writer = csv.writer(rmse_file, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
 
         # rmse_writer.writerow(['nu_hmm','rmse_real_predict','rmse_clonal_predict','rmse_clonal_real'])
-        rmse_writer.writerow([nu, rmse_real_predict,rmse_clonal_predict,rmse_clonal_real])
+        rmse_writer.writerow([nu, rmse_real_predict,rmse_real_CFML])
 # **********************************************************************************************************************
 def CFML_recombination(CFML_recomLog):
-    CFMLData = np.zeros((alignment_len, tips_num))
+    CFMLData = np.zeros((alignment_len, nodes_number))
     df = pd.read_csv(CFML_recomLog,sep='\t', engine='python')
+    # print(df)
     for i in range(len(df)):
         s = df['Beg'][i]
         e = df['End'][i]
-        node = df['Node'][i]
+        node = int(df['Node'][i])
+        if "NODE_" in str(node):
+          node = int(node[5:])
         CFMLData[s:e,int(give_taxon_index(tree, node))] = 1
 
     return CFMLData
@@ -585,9 +593,10 @@ if __name__ == "__main__":
     # alignment = dendropy.DnaCharacterMatrix.get(file=open("/home/nehleh/Documents/0_Research/PhD/Data/simulationdata/BaciSim/2/wholegenome.fasta"),schema="fasta")
     # xml_path = '/home/nehleh/Documents/0_Research/PhD/Data/simulationdata/BaciSim/2/Beast/GTR_template.xml'
 
-    # tree_path = '/home/nehleh/Documents/work/55/b103191f338ba6dcad98e21ad62b23/RAxML_bestTree.tree'
+    # tree_path = '/home/nehleh/work/results/n_10/n_10_RAxML_bestTree.tree'
     # tree = Tree.get_from_path(tree_path, 'newick')
-    # alignment = dendropy.DnaCharacterMatrix.get(file=open("/home/nehleh/Documents/work/1f/f6627cde194e3110eee2327f16428c/wholegenome.fasta"),schema="fasta")
+    # alignment = dendropy.DnaCharacterMatrix.get(file=open("/home/nehleh/work/results/n_10/n_10_wholegenome.fasta"),schema="fasta")
+    # recomLog = '/home/nehleh/work/results/n_10/n_10_BaciSim_Log.txt'
 
 
     parser = argparse.ArgumentParser(description='''You did not specify any parameters.''')
@@ -613,6 +622,7 @@ if __name__ == "__main__":
     p_start = args.startProb
     p_trans = args.transmat
     cfml_path = args.cfmlFile
+    # cfml_path = '/home/nehleh/CFML.importation_status.txt'
 
 
 
@@ -624,14 +634,15 @@ if __name__ == "__main__":
     dna = column[0]
     tips_num = len(alignment)
     alignment_len = alignment.sequence_size
+    nodes_number = len(tree.nodes())
 
     set_index(tree, alignment)
 
-    # p_start = np.array([0.85, 0.05, 0.05, 0.05])
-    # p_trans = np.array([[0.997, 0.001, 0.001, 0.001],
-    #                             [0.001, 0.997, 0.001, 0.001],
-    #                             [0.001, 0.001, 0.997, 0.001],
-    #                             [0.001, 0.001, 0.001, 0.997]])
+    p_start = np.array([0.85, 0.05, 0.05, 0.05])
+    p_trans = np.array([[0.997, 0.001, 0.001, 0.001],
+                                [0.001, 0.997, 0.001, 0.001],
+                                [0.001, 0.001, 0.997, 0.001],
+                                [0.001, 0.001, 0.001, 0.997]])
 
 
 
@@ -646,17 +657,21 @@ if __name__ == "__main__":
     make_beast_xml_partial(tipdata,tree,xml_path)
     make_beast_xml_original(tree,xml_path)
 
+
     realData = real_recombination(recomLog)
     phyloHMMData = predict_recombination(tipdata)
     clonalData = np.zeros((alignment_len, tips_num))
     CFMLData = CFML_recombination(cfml_path)
 
     rmse_real_phyloHMM= calc_rmse(realData,phyloHMMData)
+    print(rmse_real_phyloHMM)
     rmse_clonal_phyloHMM = calc_rmse(clonalData, phyloHMMData)
-    # rmse_clonal_real = calc_rmse(clonalData, realData)
+    rmse_clonal_real = calc_rmse(clonalData, realData)
     rmse_real_CFML = calc_rmse(realData,CFMLData)
+    print(rmse_real_CFML)
 
-    write_rmse(nu,rmse_real_phyloHMM, rmse_clonal_phyloHMM, rmse_real_CFML)
+
+    write_rmse(nu,rmse_real_phyloHMM, rmse_real_CFML)
 
     comparison_plot(realData, phyloHMMData)
 

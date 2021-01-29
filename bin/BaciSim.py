@@ -138,7 +138,6 @@ def my_mrca(tree,tips):
   myMrca = pdm.mrca(taxon[node0[0]], taxon[node1[0]])
 
   return myMrca.index
-
 # ----------------------------------------------------------------------------------------------------------------------
 def new_mrca(tree1,tree2,primenode,deletenode):
   a = []
@@ -159,7 +158,6 @@ def give_older_recom(s_equ):
   max = np.max([a[2] for a in s_equ])
   [a for a in s_equ if (count[a[0]] == 1) or (a[2]==max)]
   return [a for a in s_equ if (count[a[0]] == 1) or (a[2]==max)]
-
 # ----------------------------------------------------------------------------------------------------------------------
 def remove_internal_labels(strtree):
   tree = Tree.get_from_string(strtree,schema='newick')
@@ -238,7 +236,6 @@ def my_merge_trees(recomtrees , recomnodes):
 
   return maintree.as_string(schema="newick")
 # ----------------------------------------------------------------------------------------------------------------------
-
 def common_nodes(clonaltree,overlap_nodes):
   kids = []
   nodes = []
@@ -270,7 +267,6 @@ def find_attached_node(tree,node,prunenode):
             attached_id = id
             break
   return attached_node,attached_id,ancestor
-
 # ----------------------------------------------------------------------------------------------------------------------
 def regraft_recomnodes(tree,attached_node,attached_id,prunenode,recomnode,ancestor):
   relocated_nodes = ancestor[attached_id-1]  # relocated node is the adjacent node of recombinant node
@@ -285,7 +281,6 @@ def regraft_recomnodes(tree,attached_node,attached_id,prunenode,recomnode,ancest
   relocated_nodes.edge_length = relocated_nodes.edge_length - newborn.edge_length
   newborn.add_child(relocated_nodes)
   attached_node.add_child(newborn)
-
 # ----------------------------------------------------------------------------------------------------------------------
 def merge_Recomtrees(recomtrees , recomnodes):
 
@@ -766,7 +761,7 @@ def make_recom_fig(alignment_len,nodes_number,tips_number,clonal_tree):
           e = int(all_data['end'][j])
           output[s:e,i] = 1
 
-    fig = plt.figure(figsize=(tips_number,tips_number/2))
+    fig = plt.figure(figsize=(tips_number+9,tips_number/2))
     color=['red', 'green' ,'purple', 'blue','black']
     clonaltree = Tree.get_from_string(clonal_tree,schema='newick')
     set_index(clonaltree)
@@ -778,13 +773,13 @@ def make_recom_fig(alignment_len,nodes_number,tips_number,clonal_tree):
         ax.plot(output[:,i] ,label= str(i)+' is mrca:'+ str(d) ,color = color[i%5])
       else:
         ax.plot(output[:,i] ,label= i ,color = color[i%5])
-      ax.legend(loc = 2 , bbox_to_anchor=(0.95, 1.5))
+      ax.legend( bbox_to_anchor=(0.045, 1.5) ,prop={'size':10} )
       ax.set_frame_on(False)
       ax.axis('off')
 
     ax.axis('on')
     ax.set_yticklabels([])
-    plt.savefig("BaciSim_Recombination.jpeg")
+    plt.savefig("./BaciSim_Recombination.jpeg")
 # ----------------------------------------------------------------------------------------------------------------------
 def generate_final_report(df,alignment_len,clonal_tree,tips_number):
     # endpoints = df.stack().sort_values().reset_index(drop=True)
@@ -844,7 +839,9 @@ def generate_final_report(df,alignment_len,clonal_tree,tips_number):
         else:
             stat.append("overlap")
             # final_tree.append("")
-            final_tree.append(my_merge_trees(r_trees[i],nodes[i]))
+            # final_tree.append(my_merge_trees(r_trees[i],nodes[i]))
+            final_tree.append(merge_conflict(r_trees[i], nodes[i]))
+
 
     final = pd.DataFrame({'start': bounds[:-1], 'end': bounds[1:] ,'nodes':nodes, 'descendants':children,  'len':final_len , 'status':stat ,'final_tree': final_tree ,'total': total ,'tree':r_trees })
     final[['nodes', 'start', 'end', 'len', 'descendants', 'status']].to_csv('./BaciSim_Log.txt', sep='\t', header=True)
@@ -865,6 +862,107 @@ def generate_final_report(df,alignment_len,clonal_tree,tips_number):
     return final
 # ----------------------------------------------------------------------------------------------------------------------
 
+def merge_conflict(recomtrees , recomnodes):
+
+  clonaltree = Tree.get_from_string(clonal_tree,schema='newick')
+  set_index(clonaltree)
+
+  # if one one node is the subset of the other nodes
+  conflict = common_nodes(clonaltree,recomnodes)
+
+  # print(conflict)
+
+  if (len(conflict) > 0)  and (conflict[0][0] == conflict[0][1]):
+        # print("Same nodes")
+        conflict = []
+
+  if len(conflict) == 0 :
+      # print("NOOOOOO conflict!")
+
+      desc = []
+      equ = np.zeros((len(recomtrees),4))
+      for treeid in range(len(recomtrees)):
+        rtree= Tree.get_from_string(recomtrees[treeid],schema='newick')
+        set_index(rtree)
+        equ[treeid,0] = recomnodes[treeid]
+        equ[treeid,1:3] = give_equivalent_node(rtree)
+        equ[treeid,3] = treeid
+
+      s_equ = equ[equ[:,2].argsort()[::-1]]
+      s_equ = give_older_recom(s_equ)
+      # print(s_equ)
+
+      maintree = Tree.get_from_string(recomtrees[int(s_equ[0][3])],schema='newick')
+      set_index(maintree)
+
+      for i in range(1,len(s_equ)):
+        temptree = Tree.get_from_string(recomtrees[int(s_equ[i][3])],schema='newick')
+        set_index(temptree)
+        node_maintree = int(s_equ[i][0])
+        if node_maintree  >= tips_number:
+          node_maintree = new_mrca(clonaltree,maintree,node_maintree,int(s_equ[i-1][0]))
+        prunenode = maintree.find_node_with_label(str(node_maintree))
+        node = temptree.find_node_with_label(str(int(s_equ[i][1])))
+        parent = prunenode.parent_node
+
+        attached_node,attached_id,ancestor =  find_attached_node(maintree,node,prunenode)
+        regraft_recomnodes(maintree,attached_node,attached_id,prunenode,node,ancestor)
+
+      return maintree.as_string(schema="newick")
+
+  elif len(conflict) > 0 :
+    print("CONFLICT!! ")
+    desc = []
+    equ = np.zeros((len(recomtrees), 4))
+    for treeid in range(len(recomtrees)):
+      rtree = Tree.get_from_string(recomtrees[treeid], schema='newick')
+      set_index(rtree)
+      equ[treeid, 0] = recomnodes[treeid]
+      equ[treeid, 1:3] = give_equivalent_node(rtree)
+      equ[treeid, 3] = treeid
+
+    print(equ)
+    for i in range(len(conflict)):
+      if conflict[i][0] < tips_number:
+        print("one node is taxa!")
+        node1 = clonaltree.find_node_with_label(str(conflict[i][0]))
+        node2 = clonaltree.find_node_with_label(str(conflict[i][1]))
+        if node1.parent_node == node2:
+          print(node2, "is parent of", node1)
+          [x,y] = np.where(equ==node2.index)
+          # print(x)
+          # print(y)
+          equ = np.delete(equ, (x), axis=0)
+
+
+      else:
+        print("two nodes are internal!")
+
+    print(equ)
+    s_equ = equ[equ[:, 2].argsort()[::-1]]
+    s_equ = give_older_recom(s_equ)
+    # print(s_equ)
+
+    maintree = Tree.get_from_string(recomtrees[int(s_equ[0][3])], schema='newick')
+    set_index(maintree)
+
+    for i in range(1, len(s_equ)):
+      temptree = Tree.get_from_string(recomtrees[int(s_equ[i][3])], schema='newick')
+      set_index(temptree)
+      node_maintree = int(s_equ[i][0])
+      if node_maintree >= tips_number:
+        node_maintree = new_mrca(clonaltree, maintree, node_maintree, int(s_equ[i - 1][0]))
+      prunenode = maintree.find_node_with_label(str(node_maintree))
+      node = temptree.find_node_with_label(str(int(s_equ[i][1])))
+      parent = prunenode.parent_node
+
+      attached_node, attached_id, ancestor = find_attached_node(maintree, node, prunenode)
+      regraft_recomnodes(maintree, attached_node, attached_id, prunenode, node, ancestor)
+
+    return maintree.as_string(schema="newick")
+
+# ----------------------------------------------------------------------------------------------------------------------
+
 
 
 if __name__ == "__main__":
@@ -873,11 +971,11 @@ if __name__ == "__main__":
         description='''You did not specify any parameters. You must at least specify the number of chromosomes sampled and the sequence length. ''',
         epilog="""All's well that ends well.""")
     parser.add_argument('-n', "--tips_number", type=int, default=10 , help='Sets the number of isolates (default is 10)')
-    parser.add_argument('-g', "--alignment_len", type=int, default=5000 , help='Sets the number and lengths of fragments of genetic material (default is 5000)')
-    parser.add_argument('-l', "--recom_len", type=int, default=500, help='Sets the average length of an external recombinant interval, (default is 500)')
+    parser.add_argument('-g', "--alignment_len", type=int, default=1000 , help='Sets the number and lengths of fragments of genetic material (default is 5000)')
+    parser.add_argument('-l', "--recom_len", type=int, default=200, help='Sets the average length of an external recombinant interval, (default is 500)')
     parser.add_argument('-r', "--recom_rate",type=float, default=0.05, help='Sets the site-specific rate of external (between species) recombination, (default is 0.05)')
     parser.add_argument('-nu',"--nu" ,  type=float, default=0.2, help='nu')
-    parser.add_argument('-s',"--status" ,  type=int, default=2, help='0 is just leaves, 1 is for both internal nodes and leaves and 2 is just internal nodes')
+    parser.add_argument('-s',"--status" ,  type=int, default=0, help='0 is just leaves, 1 is for both internal nodes and leaves and 2 is just internal nodes')
 
     # Read arguments from command line
     args = parser.parse_args()
@@ -897,11 +995,11 @@ if __name__ == "__main__":
     recom_num = give_recom_num(tree,recom_rate,alignment_len)
     node_labels,node_weight = make_nodes_weight(tree, status)
     df,all_data = recom_on_alignment(recom_num, recom_len, alignment_len, clonal_tree, node_labels, node_weight, nu_ex, taxa)
-    print(df)
     make_recom_fig(alignment_len, nodes_number, tips_number, clonal_tree)
     final_report = generate_final_report(df, alignment_len, clonal_tree, tips_number)
 
-    print(final_report)
+
+    # # print(final_report)
     plt.show()
 
 

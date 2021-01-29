@@ -1,15 +1,15 @@
 nextflow.enable.dsl = 2
 
 
-params.genomeSize = '1000'
-params.recom_len = '300'
+params.genomeSize = '5000'
+params.recom_len = '500'
 params.recom_rate = '0.05'
 params.nu_sim = '0.2'
 params.xml_file = '/home/nehleh/Documents/GTR_template.xml'
 params.out = '/home/nehleh/work/results/'
 
 
-genomeNum = Channel.from(7)
+genomeNum = Channel.from(10)
 frequencies = Channel.of(' 0.2184,0.2606,0.3265,0.1946' )
 rates =  Channel.of('0.975070 ,4.088451 ,0.991465 ,0.640018 ,3.840919 ,1')
 nu_hmm = Channel.from(0.03)
