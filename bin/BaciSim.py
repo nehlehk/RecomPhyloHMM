@@ -1000,7 +1000,7 @@ if __name__ == "__main__":
 
 
     # # print(final_report)
-    plt.show()
+    # plt.show()
 
 
 

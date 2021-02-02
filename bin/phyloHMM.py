@@ -530,13 +530,16 @@ def real_recombination(recomLog):
 
     return realData
 # **********************************************************************************************************************
-def predict_recombination(tipdata):
+def predict_recombination(tipdata,mixtureProb):
     predictionData = np.zeros((alignment_len, tips_num))
     for site in range(alignment_len):
         for i in range(tips_num):
             # predictionData[site, i] = max(item for item in tipdata[site, i] if item != 1)
-            predictionData[site, i] = round(max(item for item in tipdata[site, i] if item != 1))
-
+            # predictionData[site, i] = round(max(item for item in tipdata[site, i] if item != 1))
+            if  max(item for item in tipdata[site, i] if item != 1) > mixtureProb :
+                predictionData[site, i] = 1
+            else:
+                predictionData[site, i] = 0
     return predictionData
 # **********************************************************************************************************************
 def calc_rmse(data1,data2):
@@ -575,10 +578,10 @@ def CFML_recombination(CFML_recomLog):
     for i in range(len(df)):
         s = df['Beg'][i]
         e = df['End'][i]
-        node = int(df['Node'][i])
+        node = df['Node'][i]
         if "NODE_" in str(node):
-          node = int(node[5:])
-        CFMLData[s:e,int(give_taxon_index(tree, node))] = 1
+          node = node[5:]
+        CFMLData[s:e,int(give_taxon_index(tree, int(node)))] = 1
 
     return CFMLData
 # **********************************************************************************************************************
@@ -604,6 +607,7 @@ if __name__ == "__main__":
     parser.add_argument('-a', "--alignmentFile", type=str, required= True , help='fasta file')
     parser.add_argument('-l', "--recomlogFile", type=str, required=True, help='recombination log file')
     parser.add_argument('-nu', "--nuHmm", type=float,default=0.03,help='nuHmm')
+    parser.add_argument('-p', "--mixtureProb", type=float, default=0.5, help='mixtureProb')
     parser.add_argument('-f', "--frequencies", type=list, default= [0.2184,0.2606,0.3265,0.1946],help='frequencies')
     parser.add_argument('-r', "--rates", type=list, default= [0.975070 ,4.088451 ,0.991465 ,0.640018 ,3.840919 ], help='rates')
     parser.add_argument('-s', "--startProb", type=list, default= [0.85, 0.05, 0.05, 0.05],help='frequencies')
@@ -622,6 +626,7 @@ if __name__ == "__main__":
     p_start = args.startProb
     p_trans = args.transmat
     cfml_path = args.cfmlFile
+    mixtureProb = args.mixtureProb
     # cfml_path = '/home/nehleh/CFML.importation_status.txt'
 
 
@@ -652,14 +657,14 @@ if __name__ == "__main__":
 
     tree = Tree.get_from_path(tree_path, 'newick')
     set_index(tree, alignment)
-    recom_resultFig(tree,tipdata, 0.3)
+    recom_resultFig(tree,tipdata,mixtureProb)
 
     make_beast_xml_partial(tipdata,tree,xml_path)
     make_beast_xml_original(tree,xml_path)
 
 
     realData = real_recombination(recomLog)
-    phyloHMMData = predict_recombination(tipdata)
+    phyloHMMData = predict_recombination(tipdata,mixtureProb)
     clonalData = np.zeros((alignment_len, tips_num))
     CFMLData = CFML_recombination(cfml_path)
 
