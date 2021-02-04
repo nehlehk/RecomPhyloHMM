@@ -561,7 +561,7 @@ def comparison_plot(RealData,predictionData):
         ax.plot(RealData[:, i], label="RealData")
         ax.plot(predictionData[:, i], label="predictionData ")
         ax.set_ylabel("posterior probability for each state")
-        ax.legend(loc=1, bbox_to_anchor=(1.23, 1.1))
+        ax.legend(loc='best')
         plt.savefig("taxa" + str(i) + ".jpeg")
 # **********************************************************************************************************************
 def write_rmse(nu,rmse_real_predict,rmse_real_CFML):
@@ -669,11 +669,11 @@ if __name__ == "__main__":
     CFMLData = CFML_recombination(cfml_path)
 
     rmse_real_phyloHMM= calc_rmse(realData,phyloHMMData)
-    print(rmse_real_phyloHMM)
+    # print(rmse_real_phyloHMM)
     rmse_clonal_phyloHMM = calc_rmse(clonalData, phyloHMMData)
     rmse_clonal_real = calc_rmse(clonalData, realData)
     rmse_real_CFML = calc_rmse(realData,CFMLData)
-    print(rmse_real_CFML)
+    # print(rmse_real_CFML)
 
 
     write_rmse(nu,rmse_real_phyloHMM, rmse_real_CFML)

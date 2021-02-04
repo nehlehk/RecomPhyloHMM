@@ -975,7 +975,9 @@ if __name__ == "__main__":
     parser.add_argument('-l', "--recom_len", type=int, default=200, help='Sets the average length of an external recombinant interval, (default is 500)')
     parser.add_argument('-r', "--recom_rate",type=float, default=0.05, help='Sets the site-specific rate of external (between species) recombination, (default is 0.05)')
     parser.add_argument('-nu',"--nu" ,  type=float, default=0.2, help='nu')
-    parser.add_argument('-s',"--status" ,  type=int, default=0, help='0 is just leaves, 1 is for both internal nodes and leaves and 2 is just internal nodes')
+    parser.add_argument('-s',"--status" ,  type=int, default=1, help='0 is just leaves, 1 is for both internal nodes and leaves and 2 is just internal nodes')
+    parser.add_argument('-t', "--tMRCA", type=float, default=0.01 ,help='tMRCA')
+
 
     # Read arguments from command line
     args = parser.parse_args()
@@ -986,11 +988,12 @@ if __name__ == "__main__":
     recom_rate = args.recom_rate
     nu_ex = args.nu
     status = args.status
+    tMRCA = args.tMRCA
     threshold_len = 200
-    max_tMRCA= 0.01
 
 
-    tree, clonal_tree, taxa = make_clonaltree(tips_number, max_tMRCA)
+
+    tree, clonal_tree, taxa = make_clonaltree(tips_number, tMRCA)
     nodes_number = len(tree.nodes())
     recom_num = give_recom_num(tree,recom_rate,alignment_len)
     node_labels,node_weight = make_nodes_weight(tree, status)
