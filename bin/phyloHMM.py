@@ -3,20 +3,15 @@ import numpy.linalg as la
 import pandas as pd
 import matplotlib.pyplot as plt
 import hmmlearn.base
-import logging
 import hmmlearn._utils
-from scipy.integrate import quad
 from dendropy import Tree, DnaCharacterMatrix
 import dendropy
-from hmmlearn import hmm
-import string
 import xml.etree.ElementTree as ET
-from dendropy.calculate import treecompare
 from sklearn.metrics import mean_squared_error
 import math
 import argparse
 import csv
-import re
+import operator
 
 
 
@@ -376,11 +371,11 @@ def phylohmm(tree,alignment,nu,p_start,p_trans,threshold):
         model.startprob_ = p_start
         model.transmat_ = p_trans
 
+        p = model.predict_proba(X)
+
         mynode, pData = find_internal_recombination(p, child_order, threshold)
         internalNode.append(mynode)
         internalPos.append(pData)
-
-        p = model.predict_proba(X)
 
         posterior.append(p)
         hiddenStates.append(model.predict(X))
