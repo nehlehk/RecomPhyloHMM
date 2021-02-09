@@ -38,8 +38,8 @@ def CFML_resultFig(tree,CFMLData):
         ax.axis('off')
     ax.axis('on')
     ax.set_yticklabels([])
-    plt.show()
-    # plt.savefig("CFML_Recombination.jpeg")
+    # plt.show()
+    plt.savefig("CFML_Recombination.jpeg")
 # **********************************************************************************************************************
 def set_label(tree):
     for node in tree.postorder_node_iter():
@@ -90,7 +90,6 @@ def CFML_recombination(CFML_recomLog):
         node = df['Node'][i]
         if "NODE_" in str(node):
             node = node[5:]
-        # print(s,e,node)
         CFMLData[s:e,int(node)] = 1
 
     return CFMLData

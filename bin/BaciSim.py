@@ -92,6 +92,11 @@ def set_index(tree):
           node.index = node.taxon.label
           node.label = str(node.index)
 # ----------------------------------------------------------------------------------------------------------------------
+def give_taxon(tree,index):
+    for node in tree.postorder_node_iter():
+        if int(node.index) == index:
+            return int(node.taxon.label)
+# ----------------------------------------------------------------------------------------------------------------------
 def give_descendents(tree,node_index,result):
   if node_index >= tips_number:
     internal_recom_node = tree.find_node_with_label(str(node_index))
@@ -101,7 +106,7 @@ def give_descendents(tree,node_index,result):
       if r_node >= tips_number:
         give_descendents(tree,r_node,result)
       else:
-        result.add(r_node)
+        result.add(give_taxon(tree,r_node))
   return result
 # ----------------------------------------------------------------------------------------------------------------------
 def give_equivalent_node_byedge(recomtree):
