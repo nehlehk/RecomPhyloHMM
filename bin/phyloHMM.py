@@ -467,7 +467,7 @@ def recom_resultFig(tree,tipdata,threshold,internalNode):
                 if ((my_tipdata[j, i, 0] > threshold) and (my_tipdata[j, i, 0] < 1.0)) or (
                         (my_tipdata[j, i, 1] > threshold) and (my_tipdata[j, i, 1] < 1.0)):
                     output[i, j] = 1
-            elif (j in recomeNode) and (internalPos[j - tips_num][i] > 0.8):
+            elif (j in recomeNode) and (internalPos[j - tips_num][i] > threshold):
                 output[i, j] = 1
 
     # for i in range(my_tipdata.shape[1]):
@@ -770,6 +770,11 @@ if __name__ == "__main__":
 
 
     tipdata,posterior,hiddenStates,score,internalNode,internalPos = phylohmm(tree, alignment, nu , p_start , p_trans, mixtureProb)
+
+    result, dataIndex = internal_recom(internalNode, tips_num)
+
+    print(result)
+    print(dataIndex)
 
     internal_plot(posterior, hiddenStates, score)
 

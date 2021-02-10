@@ -4,15 +4,20 @@ nextflow.enable.dsl = 2
 params.genomeSize = '5000'
 params.recom_len = '500'
 params.recom_rate = '0.05'
+params.tMRCA = '0.01'
 params.nu_sim = '0.2'
 params.xml_file = '/home/nehleh/Documents/GTR_template.xml'
 params.out = '/home/nehleh/work/results/'
 
 
-genomeNum = Channel.from(10)
+genome = Channel.from(10)
 frequencies = Channel.of(' 0.2184,0.2606,0.3265,0.1946' )
 rates =  Channel.of('0.975070 ,4.088451 ,0.991465 ,0.640018 ,3.840919 ,1')
-nu_hmm = Channel.from(0.03)
+//nu_hmm = Channel.from(0.005,0.01,0.02,0.03,0.04)
+//mix_prob = Channel.from(0.2,0.3,0.4,0.5,0.6,0.7)
+nu_hmm = Channel.from(0.02)
+mix_prob = Channel.from(0.5)
+repeat_range = Channel.from( 1)
 
 
 
@@ -22,20 +27,24 @@ nu_hmm = Channel.from(0.03)
 
 process BaciSim {
 
-     publishDir "${params.out}/n_$genome" , mode: 'copy' , saveAs: { filename -> "n_${genome}_$filename" }   
+     publishDir "${params.out}" , mode: 'copy' , saveAs: { filename -> "num_${repeat_range}/num_${repeat_range}_${filename}" }   
      
+    
      input:
          each genome 
+         each repeat_range
 
      output:
          path "BaciSimTrees.tree", emit: BaciSimtrees
          path "clonaltree.tree", emit: clonaltree
          path "BaciSim_Log.txt" , emit: recomlog
          path "BaciSim_Recombination.jpeg", emit: SimFig
-         val "${genome}" , emit: n_genome 
+         val "${genome}" , emit: n_genome
+         val "${repeat_range}" , emit: n_repeat
+          
      
      """
-       python3.8  /home/nehleh/PhyloCode/RecomPhyloHMM/bin/BaciSim.py -n ${genome} -g ${params.genomeSize} -l ${params.recom_len} -r ${params.recom_rate}  -nu ${params.nu_sim}  
+       python3.8  /home/nehleh/PhyloCode/RecomPhyloHMM/bin/BaciSim.py -n ${genome} -g ${params.genomeSize} -l ${params.recom_len} -r ${params.recom_rate}  -nu ${params.nu_sim}  -t ${params.tMRCA}
         
      """
 }
@@ -43,13 +52,13 @@ process BaciSim {
 
 process seq_gen {
 
-    publishDir "${params.out}/n_$genome" , mode: 'copy' , saveAs: { filename -> "n_${genome}_$filename" }
+    publishDir "${params.out}" , mode: 'copy' , saveAs: { filename -> "num_${repeat_range}/num_${repeat_range}_${filename}" } 
 
     input:
         file trees 
         val f 
         val r 
-        each genome
+        each repeat_range
         
     
     output:
@@ -65,11 +74,11 @@ process seq_gen {
 
 process Gubbins {
 
-    publishDir "${params.out}/n_$genome" , mode: 'copy' , saveAs: { filename -> "n_${genome}_$filename" }
+    publishDir "${params.out}" , mode: 'copy' , saveAs: { filename -> "num_${repeat_range}/num_${repeat_range}_${filename}" } 
 
      input:
         path wholegenome
-        each genome
+        each repeat_range
         
     
     output:
@@ -84,11 +93,11 @@ process Gubbins {
 
 process get_raxml_tree {
 
-    publishDir "${params.out}/n_$genome" , mode: 'copy' , saveAs: { filename -> "n_${genome}_$filename" }
+    publishDir "${params.out}" , mode: 'copy' , saveAs: { filename -> "num_${repeat_range}/num_${repeat_range}_${filename}" } 
 
     input:
         path wholegenome
-        each genome
+        each repeat_range
     
     output:
         path 'RAxML_bestTree.tree', emit: myRaxML
@@ -103,12 +112,13 @@ process get_raxml_tree {
 
 process CFML {
 
-    publishDir "${params.out}/n_$genome" , mode: 'copy' , saveAs: { filename -> "n_${genome}_$filename" }
+   publishDir "${params.out}" , mode: 'copy' , saveAs: { filename -> "num_${repeat_range}/num_${repeat_range}_${filename}" } 
+
 
      input:
         path wholegenome
         path myRaxML 
-        each genome
+        each repeat_range
         
     
     output:
@@ -125,24 +135,29 @@ process CFML {
 
 process phyloHMM {
 
-     publishDir "${params.out}/n_${genome}" , mode: 'copy' , saveAs: { filename -> "n_${genome}_nu_${nu_hmm}_$filename" }
+     publishDir "${params.out}" , mode: 'copy' , saveAs: { filename -> "num_${repeat_range}_nu_${nu_hmm}/num_${repeat_range}_nu_${nu_hmm}_$filename" }
 
      input:
         path wholegenome
         path myRaxML 
         path recomlog
         path CFML_recom
-        each genome
+        path CFMLtree
         each nu_hmm
+//        each mix_prob
+        each repeat_range
 
      output:
         path 'RecomPartial.xml' , emit: partial_XML 
         path 'originalSeq.xml' , emit: original_XML 
         path 'rmse.rmse' , emit : rmse 
         path 'PhyloHMM_Recombination.jpeg' , emit: phyloHMMFig
-     
+        path 'CFML_Recombination.jpeg' , emit: CFMLFig
+
+//      -p ${mix_prob} -nu ${nu_hmm}
      """
-       python3.8 /home/nehleh/PhyloCode/RecomPhyloHMM/bin/phyloHMM.py -t ${myRaxML} -a ${wholegenome} -nu ${nu_hmm} -x ${params.xml_file} -l ${recomlog} -c ${CFML_recom}
+       python3.8 /home/nehleh/PhyloCode/RecomPhyloHMM/bin/phyloHMM.py -t ${myRaxML} -a ${wholegenome}  -x ${params.xml_file} -l ${recomlog}  -ct ${CFMLtree} -c ${CFML_recom} -nu ${nu_hmm} > testresult.txt
+       
         
      """
 }
@@ -319,38 +334,64 @@ process TreeCmp {
 }
 
 
+process RMSE_summary {
+
+
+     publishDir "${params.out}/n_${genome}_num_${repeat_range}" , mode: 'copy' , saveAs: { filename -> "n_${genome}_num_${repeat_range}_$filename" }
+     
+
+     input: 
+         each genome
+         path rmse
+         each repeat_range
+
+  
+     output:
+         path 'rmse_summary.csv' , emit: rmse_summary  
+         path 'RMSE_comparison.jpeg' , emit: rmse_plot
+    
+     """
+       python3.8 /home/nehleh/PhyloCode/RecomPhyloHMM/bin/rmse_summary.py -f ${rmse}
+       
+     """
+}
+
 
 
 
 workflow {
 
-    BaciSim(genomeNum)
+    BaciSim(genome,repeat_range)
     
-    seq_gen(BaciSim.out.BaciSimtrees,frequencies,rates,BaciSim.out.n_genome)
+    seq_gen(BaciSim.out.BaciSimtrees,frequencies,rates,BaciSim.out.n_repeat)
     
-    Gubbins(seq_gen.out.wholegenome,BaciSim.out.n_genome)
+    Gubbins(seq_gen.out.wholegenome,BaciSim.out.n_repeat)
 
-    get_raxml_tree(seq_gen.out.wholegenome,BaciSim.out.n_genome)
-    
-    CFML(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,BaciSim.out.n_genome)
-    
-    phyloHMM(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,BaciSim.out.recomlog,CFML.out.CFML_recom,BaciSim.out.n_genome,nu_hmm)
-    
-    Beast_alignment(phyloHMM.out.original_XML,BaciSim.out.n_genome,nu_hmm)
-    
-    treeannotator_alignment(Beast_alignment.out.beastSeqTree,BaciSim.out.n_genome,nu_hmm)
-
-    convertor_SeqTree(treeannotator_alignment.out.SeqTree,BaciSim.out.n_genome,nu_hmm)   
-    
-    Beast_partial(phyloHMM.out.partial_XML,BaciSim.out.n_genome,nu_hmm)
-    
-    treeannotator_partial(Beast_partial.out.beastPartialTree,BaciSim.out.n_genome,nu_hmm)
-    
-    convertor_ourTree(treeannotator_partial.out.beastOurTree,BaciSim.out.n_genome,nu_hmm)
-    
-    mergeTreeFiles(convertor_ourTree.out.beastHMMTree,get_raxml_tree.out.myRaxML,convertor_SeqTree.out.beastTree,Gubbins.out.gubbinstree,CFML.out.CFMLtree,BaciSim.out.n_genome,nu_hmm )
-
-    TreeCmp(BaciSim.out.clonaltree,mergeTreeFiles.out.allOtherTrees,BaciSim.out.n_genome,nu_hmm)
+    get_raxml_tree(seq_gen.out.wholegenome,BaciSim.out.n_repeat)
+   
+    CFML(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,BaciSim.out.n_repeat)
+   
+    phyloHMM(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,BaciSim.out.recomlog,CFML.out.CFML_recom,CFML.out.CFMLtree,nu_hmm,BaciSim.out.n_repeat)
+////    nu_hmm,mix_prob,
+   
+    collectedFile = phyloHMM.out.rmse.collectFile(name:"collected_rmse.csv",storeDir:"/home/nehleh/work/results/Summary_Results", keepHeader:false) 
+  
+//    Beast_alignment(phyloHMM.out.original_XML,BaciSim.out.n_genome,nu_hmm)
+//    
+//    treeannotator_alignment(Beast_alignment.out.beastSeqTree,BaciSim.out.n_genome,nu_hmm)
+//
+//    convertor_SeqTree(treeannotator_alignment.out.SeqTree,BaciSim.out.n_genome,nu_hmm)   
+//    
+//    Beast_partial(phyloHMM.out.partial_XML,BaciSim.out.n_genome,nu_hmm)
+//    
+//    treeannotator_partial(Beast_partial.out.beastPartialTree,BaciSim.out.n_genome,nu_hmm)
+//    
+//    convertor_ourTree(treeannotator_partial.out.beastOurTree,BaciSim.out.n_genome,nu_hmm)
+//    
+//    mergeTreeFiles(convertor_ourTree.out.beastHMMTree,get_raxml_tree.out.myRaxML,convertor_SeqTree.out.beastTree,Gubbins.out.gubbinstree,CFML.out.CFMLtree,BaciSim.out.n_genome,nu_hmm )
+//
+//    TreeCmp(BaciSim.out.clonaltree,mergeTreeFiles.out.allOtherTrees,BaciSim.out.n_genome,nu_hmm)
+//
+//    RMSE_summary(BaciSim.out.n_genome,phyloHMM.out.rmse,BaciSim.out.n_repeat)
        
 }
-
