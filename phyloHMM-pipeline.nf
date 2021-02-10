@@ -16,7 +16,7 @@ rates =  Channel.of('0.975070 ,4.088451 ,0.991465 ,0.640018 ,3.840919 ,1')
 //nu_hmm = Channel.from(0.005,0.01,0.02,0.03,0.04)
 //mix_prob = Channel.from(0.2,0.3,0.4,0.5,0.6,0.7)
 nu_hmm = Channel.from(0.02)
-mix_prob = Channel.from(0.5)
+mix_prob = Channel.from(0.7)
 repeat_range = Channel.from(1)
 
 
@@ -156,7 +156,7 @@ process phyloHMM {
 
 //      -p ${mix_prob} -nu ${nu_hmm}
      """
-       python3.8 /home/nehleh/PhyloCode/RecomPhyloHMM/bin/phyloHMM.py -t ${myRaxML} -a ${wholegenome}  -x ${params.xml_file} -l ${recomlog}  -ct ${CFMLtree} -c ${CFML_recom} -nu ${nu_hmm} > testResult.txt
+       python3.8 /home/nehleh/PhyloCode/RecomPhyloHMM/bin/phyloHMM.py -t ${myRaxML} -a ${wholegenome}  -x ${params.xml_file} -l ${recomlog}  -ct ${CFMLtree} -c ${CFML_recom} -nu ${nu_hmm} 
        
         
      """
