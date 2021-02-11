@@ -10,14 +10,14 @@ params.xml_file = '/home/nehleh/Documents/GTR_template.xml'
 params.out = '/home/nehleh/work/results/'
 
 
-genome = Channel.from(7)
+genome = Channel.from(10)
 frequencies = Channel.of(' 0.2184,0.2606,0.3265,0.1946' )
 rates =  Channel.of('0.975070 ,4.088451 ,0.991465 ,0.640018 ,3.840919 ,1')
 //nu_hmm = Channel.from(0.005,0.01,0.02,0.03,0.04)
 //mix_prob = Channel.from(0.2,0.3,0.4,0.5,0.6,0.7)
 nu_hmm = Channel.from(0.02)
 mix_prob = Channel.from(0.7)
-repeat_range = Channel.from(1..2)
+repeat_range = Channel.from(1..4)
 
 
 
@@ -27,7 +27,8 @@ repeat_range = Channel.from(1..2)
 
 process BaciSim {
 
-     publishDir "${params.out}" , mode: 'copy' , saveAs: { filename -> "num_${repeat_range}/num_${repeat_range}_${filename}" }   
+     publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}_nu_${nu_hmm}/num_${repeat_range}_nu_${nu_hmm}_$filename" }
+     maxForks 1
      
     
      input:
@@ -40,8 +41,6 @@ process BaciSim {
          path "clonaltree.tree", emit: clonaltree
          path "BaciSim_Log.txt" , emit: recomlog
          path "BaciSim_Recombination.jpeg", emit: SimFig
-         val "${genome}" , emit: n_genome
-//         val "${repeat_range}" , emit: n_repeat
           
      
      """
@@ -54,9 +53,10 @@ process BaciSim {
 process seq_gen {
 
     publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}_nu_${nu_hmm}/num_${repeat_range}_nu_${nu_hmm}_$filename" }
+    maxForks 1
 
     input:
-        file trees 
+        path BaciSimtrees 
         val f 
         val r 
         each repeat_range
@@ -67,8 +67,8 @@ process seq_gen {
         path "wholegenome.fasta" , emit: wholegenome
     
     """     
-     numTrees=\$(wc -l < ${trees} | awk '{ print \$1 }')
-     seq-gen  -mGTR  -l${params.genomeSize} -r$r -f$f -s0.2 -of ${trees}  -p \$numTrees > wholegenome.fasta
+     numTrees=\$(wc -l < ${BaciSimtrees} | awk '{ print \$1 }')
+     seq-gen  -mGTR  -l${params.genomeSize} -r$r -f$f -s0.2 -of ${BaciSimtrees}  -p \$numTrees > wholegenome.fasta
 
     """
 }
@@ -77,6 +77,7 @@ process seq_gen {
 process Gubbins {
 
     publishDir "${params.out}" , mode: 'copy' , saveAs: { filename -> "num_${repeat_range}_nu_${nu_hmm}/num_${repeat_range}_nu_${nu_hmm}_$filename" }
+    maxForks 1
 
      input:
         path wholegenome
@@ -365,15 +366,15 @@ process RMSE_summary {
 
 workflow {
 
-    BaciSim(genome,repeat_range)
+    BaciSim(genome,repeat_range,nu_hmm)
     
-    seq_gen(BaciSim.out.BaciSimtrees,frequencies,rates,BaciSim.out.n_repeat)
+    seq_gen(BaciSim.out.BaciSimtrees,frequencies,rates,repeat_range,nu_hmm)
     
-//    Gubbins(seq_gen.out.wholegenome,BaciSim.out.n_repeat)
+    Gubbins(seq_gen.out.wholegenome,repeat_range,nu_hmm)
 
-    get_raxml_tree(seq_gen.out.wholegenome,BaciSim.out.n_repeat)
-   
-//    CFML(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,BaciSim.out.n_repeat)
+//    get_raxml_tree(seq_gen.out.wholegenome,repeat_range,nu_hmm)
+//   
+//    CFML(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,repeat_range,nu_hmm)
 //   
 //    phyloHMM(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,BaciSim.out.recomlog,CFML.out.CFML_recom,CFML.out.CFMLtree,nu_hmm,BaciSim.out.n_repeat)
 ////    nu_hmm,mix_prob,
