@@ -1,23 +1,23 @@
 nextflow.enable.dsl = 2
 
 
-params.genomeSize = '1000'
+params.genomeSize = '1500'
 params.recom_len = '300'
 params.recom_rate = '0.05'
 params.tMRCA = '0.01'
 params.nu_sim = '0.2'
-params.xml_file = '/home/nehleh/Documents/GTR_template.xml'
-params.out = '/home/nehleh/work/results/'
+//params.xml_file = '/home/nehleh/Documents/GTR_template.xml'
+params.out =  "${PWD}/results" 
 
 
-genome = Channel.from(8)
+genome = Channel.from(10)
 frequencies = Channel.of(' 0.2184,0.2606,0.3265,0.1946' )
 rates =  Channel.of('0.975070 ,4.088451 ,0.991465 ,0.640018 ,3.840919 ,1')
 //nu_hmm = Channel.from(0.005,0.01,0.02,0.03,0.04)
 //mix_prob = Channel.from(0.2,0.3,0.4,0.5,0.6,0.7)
 nu_hmm = Channel.from(0.02)
 mix_prob = Channel.from(0.7)
-repeat_range = Channel.from(1)
+repeat_range = Channel.from(1..4)
 
 
 
@@ -29,6 +29,8 @@ process BaciSim {
 
      publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}_nu_${nu_hmm}/num_${repeat_range}_nu_${nu_hmm}_$filename" }
      maxForks 1
+     
+     conda "anaconda::python"
      
     
      input:
@@ -44,7 +46,7 @@ process BaciSim {
           
      
      """
-       python3.8  /home/nehleh/PhyloCode/RecomPhyloHMM/bin/BaciSim.py -n ${genome} -g ${params.genomeSize} -l ${params.recom_len} -r ${params.recom_rate}  -nu ${params.nu_sim}  -t ${params.tMRCA}
+       python3.8  $PWD/BaciSim.py -n ${genome} -g ${params.genomeSize} -l ${params.recom_len} -r ${params.recom_rate}  -nu ${params.nu_sim}  -t ${params.tMRCA}
         
      """
 }
@@ -368,37 +370,35 @@ workflow {
 
     BaciSim(genome,repeat_range,nu_hmm)
     
-    seq_gen(BaciSim.out.BaciSimtrees,frequencies,rates,repeat_range,nu_hmm)
-    
-    Gubbins(seq_gen.out.wholegenome,repeat_range,nu_hmm)
+//    seq_gen(BaciSim.out.BaciSimtrees,frequencies,rates,repeat_range,nu_hmm)
+//    
+//    Gubbins(seq_gen.out.wholegenome,repeat_range,nu_hmm)
 
-    get_raxml_tree(seq_gen.out.wholegenome,repeat_range,nu_hmm)
-   
-    CFML(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,repeat_range,nu_hmm)
-   
-    phyloHMM(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,BaciSim.out.recomlog,CFML.out.CFML_recom,CFML.out.CFMLtree,nu_hmm,BaciSim.out.n_repeat)
-//    nu_hmm,mix_prob,
+//    get_raxml_tree(seq_gen.out.wholegenome,repeat_range,nu_hmm)
+//   
+//    CFML(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,repeat_range,nu_hmm)
+//   
+//    phyloHMM(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,BaciSim.out.recomlog,CFML.out.CFML_recom,CFML.out.CFMLtree,nu_hmm,BaciSim.out.n_repeat)
+////    nu_hmm,mix_prob,
    
 //    collectedFile = phyloHMM.out.rmse.collectFile(name:"collected_rmse.csv",storeDir:"/home/nehleh/work/results/Summary_Results", keepHeader:false) 
   
-    Beast_alignment(phyloHMM.out.original_XML,BaciSim.out.n_genome,nu_hmm)
-    
-    treeannotator_alignment(Beast_alignment.out.beastSeqTree,BaciSim.out.n_genome,nu_hmm)
-
-    convertor_SeqTree(treeannotator_alignment.out.SeqTree,BaciSim.out.n_genome,nu_hmm)   
-    
-    Beast_partial(phyloHMM.out.partial_XML,BaciSim.out.n_genome,nu_hmm)
-    
-    treeannotator_partial(Beast_partial.out.beastPartialTree,BaciSim.out.n_genome,nu_hmm)
-    
-    convertor_ourTree(treeannotator_partial.out.beastOurTree,BaciSim.out.n_genome,nu_hmm)
-    
-    mergeTreeFiles(convertor_ourTree.out.beastHMMTree,get_raxml_tree.out.myRaxML,convertor_SeqTree.out.beastTree,Gubbins.out.gubbinstree,CFML.out.CFMLtree,BaciSim.out.n_genome,nu_hmm )
-
-    TreeCmp(BaciSim.out.clonaltree,mergeTreeFiles.out.allOtherTrees,BaciSim.out.n_genome,nu_hmm)
-    
-    phyloHMM(seq_gen.out.wholegenome,convertor_ourTree.out.beastHMMTree,BaciSim.out.recomlog,CFML.out.CFML_recom,CFML.out.CFMLtree,nu_hmm,BaciSim.out.n_repeat)
-
+//    Beast_alignment(phyloHMM.out.original_XML,BaciSim.out.n_genome,nu_hmm)
+//    
+//    treeannotator_alignment(Beast_alignment.out.beastSeqTree,BaciSim.out.n_genome,nu_hmm)
+//
+//    convertor_SeqTree(treeannotator_alignment.out.SeqTree,BaciSim.out.n_genome,nu_hmm)   
+//    
+//    Beast_partial(phyloHMM.out.partial_XML,BaciSim.out.n_genome,nu_hmm)
+//    
+//    treeannotator_partial(Beast_partial.out.beastPartialTree,BaciSim.out.n_genome,nu_hmm)
+//    
+//    convertor_ourTree(treeannotator_partial.out.beastOurTree,BaciSim.out.n_genome,nu_hmm)
+//    
+//    mergeTreeFiles(convertor_ourTree.out.beastHMMTree,get_raxml_tree.out.myRaxML,convertor_SeqTree.out.beastTree,Gubbins.out.gubbinstree,CFML.out.CFMLtree,BaciSim.out.n_genome,nu_hmm )
+//
+//    TreeCmp(BaciSim.out.clonaltree,mergeTreeFiles.out.allOtherTrees,BaciSim.out.n_genome,nu_hmm)
+//
 //    RMSE_summary(BaciSim.out.n_genome,phyloHMM.out.rmse,BaciSim.out.n_repeat)
        
 }
