@@ -2,7 +2,7 @@ nextflow.enable.dsl = 2
 
 
 params.genomeSize = '1000'
-params.recom_len = '300'
+params.recom_len = '500'
 params.recom_rate = '0.05'
 params.tMRCA = '0.01'
 params.nu_sim = '0.2'
@@ -10,7 +10,7 @@ params.xml_file = '/home/nehleh/Documents/GTR_template.xml'
 params.out = '/home/nehleh/work/results/'
 
 
-genome = Channel.from(8)
+genome = Channel.from(10)
 frequencies = Channel.of(' 0.2184,0.2606,0.3265,0.1946' )
 rates =  Channel.of('0.975070 ,4.088451 ,0.991465 ,0.640018 ,3.840919 ,1')
 //nu_hmm = Channel.from(0.005,0.01,0.02,0.03,0.04)
@@ -54,6 +54,8 @@ process seq_gen {
 
     publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}_nu_${nu_hmm}/num_${repeat_range}_nu_${nu_hmm}_$filename" }
     maxForks 1
+    
+    
 
     input:
         path BaciSimtrees 
@@ -171,12 +173,13 @@ process phyloHMM {
 
 process Beast_alignment {
 
-     publishDir "${params.out}/n_${genome}" , mode: 'copy' , saveAs: { filename -> "n_${genome}_nu_${nu_hmm}_$filename" }
+     publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}_nu_${nu_hmm}/num_${repeat_range}_nu_${nu_hmm}_$filename" }
 
      input:
          path original_XML
          each genome
          each nu_hmm
+         each repeat_range
          
          
      output:    
@@ -191,13 +194,14 @@ process Beast_alignment {
 
 process treeannotator_alignment {
 
-     publishDir "${params.out}/n_${genome}" , mode: 'copy' , saveAs: { filename -> "n_${genome}_nu_${nu_hmm}_$filename" }
+     publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}_nu_${nu_hmm}/num_${repeat_range}_nu_${nu_hmm}_$filename" }
 
      input:
      
          path beastSeqTree
          each genome
-         each nu_hmm        
+         each nu_hmm   
+         each repeat_range     
          
      output:     
          path 'beastSeqTree.nexus' , emit: SeqTree
@@ -210,12 +214,13 @@ process treeannotator_alignment {
 
 process convertor_SeqTree {
 
-     publishDir "${params.out}/n_${genome}" , mode: 'copy' , saveAs: { filename -> "n_${genome}_nu_${nu_hmm}_$filename" }
+     publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}_nu_${nu_hmm}/num_${repeat_range}_nu_${nu_hmm}_$filename" }
      
      input:
         path SeqTree
         each genome
         each nu_hmm
+        each repeat_range
     
      output:
          path 'beastSeqTree.newick' , emit : beastTree
@@ -230,12 +235,13 @@ process convertor_SeqTree {
 
 process Beast_partial {
 
-     publishDir "${params.out}/n_${genome}" , mode: 'copy' , saveAs: { filename -> "n_${genome}_nu_${nu_hmm}_$filename" }
+     publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}_nu_${nu_hmm}/num_${repeat_range}_nu_${nu_hmm}_$filename" }
 
      input:
         path partial_XML
         each genome
         each nu_hmm
+        each repeat_range
          
          
      output:    
@@ -251,12 +257,13 @@ process Beast_partial {
 
 process treeannotator_partial {
 
-     publishDir "${params.out}/n_${genome}" , mode: 'copy' , saveAs: { filename -> "n_${genome}_nu_${nu_hmm}_$filename" }
+     publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}_nu_${nu_hmm}/num_${repeat_range}_nu_${nu_hmm}_$filename" }
 
      input:   
         path beastPartialTree
         each genome
         each nu_hmm
+        each repeat_range
          
          
      output:
@@ -273,13 +280,15 @@ process treeannotator_partial {
 
 process convertor_ourTree {
 
-     publishDir "${params.out}/n_${genome}" , mode: 'copy' , saveAs: { filename -> "n_${genome}_nu_${nu_hmm}_$filename" }
-
+     publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}_nu_${nu_hmm}/num_${repeat_range}_nu_${nu_hmm}_$filename" }
+     
+     
      input:
      
         path beastOurTree
         each genome
         each nu_hmm
+        each repeat_range
 
     
      output:
@@ -294,7 +303,7 @@ process convertor_ourTree {
 
 process mergeTreeFiles {
 
-    publishDir "${params.out}/n_${genome}" , mode: 'copy' , saveAs: { filename -> "n_${genome}_nu_${nu_hmm}_$filename" }
+    publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}_nu_${nu_hmm}/num_${repeat_range}_nu_${nu_hmm}_$filename" }
 
     input:
          path beastHMMTree
@@ -304,6 +313,7 @@ process mergeTreeFiles {
          path CFMLtree
          each genome
          each nu_hmm
+         each repeat_range
          
 
     output:
@@ -320,7 +330,7 @@ process mergeTreeFiles {
 
 process TreeCmp {
 
-     publishDir "${params.out}/n_${genome}" , mode: 'copy' , saveAs: { filename -> "n_${genome}_nu_${nu_hmm}_$filename" }
+     publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}_nu_${nu_hmm}/num_${repeat_range}_nu_${nu_hmm}_$filename" }
 
      input:
      
@@ -328,6 +338,7 @@ process TreeCmp {
          path allOtherTrees
          each genome
          each nu_hmm
+         each repeat_range
          
          
      output:
@@ -342,7 +353,7 @@ process TreeCmp {
 process RMSE_summary {
 
 
-     publishDir "${params.out}/n_${genome}_num_${repeat_range}" , mode: 'copy' , saveAs: { filename -> "n_${genome}_num_${repeat_range}_$filename" }
+     publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}_nu_${nu_hmm}/num_${repeat_range}_nu_${nu_hmm}_$filename" }
      
 
      input: 
@@ -363,6 +374,35 @@ process RMSE_summary {
 
 
 
+process phyloHMM_beast {
+
+     publishDir "${params.out}" , mode: 'copy' , saveAs: { filename -> "num_${repeat_range}_nu_${nu_hmm}/num_${repeat_range}_nu_${nu_hmm}_$filename" }
+
+     input:
+        path wholegenome
+        path beastHMMTree 
+        path recomlog
+        path CFML_recom
+        path CFMLtree
+        each nu_hmm
+//        each mix_prob
+        each repeat_range
+
+     output:
+        path 'rmse.rmse' , emit : rmse_partialBeast 
+        path 'PhyloHMM_Recombination.jpeg' , emit: phyloHMMFig_partialBeast
+
+//      -p ${mix_prob} -nu ${nu_hmm}
+     """
+       python3.8 /home/nehleh/PhyloCode/RecomPhyloHMM/bin/phyloHMM.py -t ${beastHMMTree} -a ${wholegenome}  -l ${recomlog}  -nu ${nu_hmm} -ct ${CFMLtree} -c ${CFML_recom} 
+       
+        
+     """
+}
+
+
+
+
 
 workflow {
 
@@ -376,28 +416,28 @@ workflow {
    
     CFML(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,repeat_range,nu_hmm)
    
-    phyloHMM(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,BaciSim.out.recomlog,CFML.out.CFML_recom,CFML.out.CFMLtree,nu_hmm,BaciSim.out.n_repeat)
+    phyloHMM(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,BaciSim.out.recomlog,CFML.out.CFML_recom,CFML.out.CFMLtree,nu_hmm,repeat_range)
 //    nu_hmm,mix_prob,
    
 //    collectedFile = phyloHMM.out.rmse.collectFile(name:"collected_rmse.csv",storeDir:"/home/nehleh/work/results/Summary_Results", keepHeader:false) 
   
-    Beast_alignment(phyloHMM.out.original_XML,BaciSim.out.n_genome,nu_hmm)
+    Beast_alignment(phyloHMM.out.original_XML,genome,nu_hmm,repeat_range)
     
-    treeannotator_alignment(Beast_alignment.out.beastSeqTree,BaciSim.out.n_genome,nu_hmm)
+    treeannotator_alignment(Beast_alignment.out.beastSeqTree,genome,nu_hmm,repeat_range)
 
-    convertor_SeqTree(treeannotator_alignment.out.SeqTree,BaciSim.out.n_genome,nu_hmm)   
+    convertor_SeqTree(treeannotator_alignment.out.SeqTree,genome,nu_hmm,repeat_range)   
     
-    Beast_partial(phyloHMM.out.partial_XML,BaciSim.out.n_genome,nu_hmm)
+    Beast_partial(phyloHMM.out.partial_XML,genome,nu_hmm,repeat_range)
     
-    treeannotator_partial(Beast_partial.out.beastPartialTree,BaciSim.out.n_genome,nu_hmm)
+    treeannotator_partial(Beast_partial.out.beastPartialTree,genome,nu_hmm,repeat_range)
     
-    convertor_ourTree(treeannotator_partial.out.beastOurTree,BaciSim.out.n_genome,nu_hmm)
+    convertor_ourTree(treeannotator_partial.out.beastOurTree,genome,nu_hmm,repeat_range)
     
-    mergeTreeFiles(convertor_ourTree.out.beastHMMTree,get_raxml_tree.out.myRaxML,convertor_SeqTree.out.beastTree,Gubbins.out.gubbinstree,CFML.out.CFMLtree,BaciSim.out.n_genome,nu_hmm )
+    mergeTreeFiles(convertor_ourTree.out.beastHMMTree,get_raxml_tree.out.myRaxML,convertor_SeqTree.out.beastTree,Gubbins.out.gubbinstree,CFML.out.CFMLtree,genome,nu_hmm,repeat_range)
 
-    TreeCmp(BaciSim.out.clonaltree,mergeTreeFiles.out.allOtherTrees,BaciSim.out.n_genome,nu_hmm)
+    TreeCmp(BaciSim.out.clonaltree,mergeTreeFiles.out.allOtherTrees,genome,nu_hmm,repeat_range)
     
-    phyloHMM(seq_gen.out.wholegenome,convertor_ourTree.out.beastHMMTree,BaciSim.out.recomlog,CFML.out.CFML_recom,CFML.out.CFMLtree,nu_hmm,BaciSim.out.n_repeat)
+    phyloHMM_beast(seq_gen.out.wholegenome,convertor_ourTree.out.beastHMMTree,BaciSim.out.recomlog,CFML.out.CFML_recom,CFML.out.CFMLtree,nu_hmm,repeat_range)
 
 //    RMSE_summary(BaciSim.out.n_genome,phyloHMM.out.rmse,BaciSim.out.n_repeat)
        

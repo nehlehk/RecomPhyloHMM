@@ -438,7 +438,7 @@ def internal_recom(internalNode, tips_num):
     first = []
     second = []
     result = []
-    internalnum = nodes_number - tips_num
+    internalnum = nodes_number - tips_num -1
     for i in range(internalnum):
         temp = np.unique(internalNode[i])
         one = np.where(temp >= tips_num)
@@ -726,9 +726,9 @@ if __name__ == "__main__":
     parser.add_argument('-r', "--rates", type=list, default= [0.975070 ,4.088451 ,0.991465 ,0.640018 ,3.840919 ], help='rates')
     parser.add_argument('-s', "--startProb", type=list, default= [0.85, 0.05, 0.05, 0.05],help='frequencies')
     parser.add_argument('-m', "--transmat", type=list, default= [[0.997, 0.001, 0.001, 0.001],[0.001, 0.997, 0.001, 0.001],[0.001, 0.001, 0.997, 0.001],[0.001, 0.001, 0.001, 0.997]], help='rates')
-    parser.add_argument('-x', "--xmlFile", type=str, required=True, help='xmlFile')
-    parser.add_argument('-c', "--cfmlFile", type=str, required=True, help='cfmlFile')
-    parser.add_argument('-ct', "--cfmltreefile", type=str, required=True, help='cfmltreefile')
+    parser.add_argument('-x', "--xmlFile", type=str, help='xmlFile')
+    parser.add_argument('-c', "--cfmlFile", type=str, help='cfmlFile')
+    parser.add_argument('-ct', "--cfmltreefile", type=str, help='cfmltreefile')
     args = parser.parse_args()
 
     tree_path = args.treeFile
