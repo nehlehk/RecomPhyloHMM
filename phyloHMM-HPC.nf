@@ -1,24 +1,23 @@
 nextflow.enable.dsl = 2
 
 
-params.genomeSize = '1500'
-params.recom_len = '300'
+params.genomeSize = '800'
+params.recom_len = '200'
 params.recom_rate = '0.05'
 params.tMRCA = '0.01'
 params.nu_sim = '0.2'
-//params.xml_file = '/home/nehleh/Documents/GTR_template.xml'
+params.xml_file = "${PWD}/bin/GTR_template.xml"
 params.out =  "${PWD}/results" 
 
 
-genome = Channel.from(10)
+genome = Channel.from(7)
 frequencies = Channel.of(' 0.2184,0.2606,0.3265,0.1946' )
 rates =  Channel.of('0.975070 ,4.088451 ,0.991465 ,0.640018 ,3.840919 ,1')
 //nu_hmm = Channel.from(0.005,0.01,0.02,0.03,0.04)
 //mix_prob = Channel.from(0.2,0.3,0.4,0.5,0.6,0.7)
 nu_hmm = Channel.from(0.02)
 mix_prob = Channel.from(0.7)
-repeat_range = Channel.from(1..4)
-
+repeat_range = Channel.from(1)
 
 
 
@@ -30,7 +29,7 @@ process BaciSim {
      publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}_nu_${nu_hmm}/num_${repeat_range}_nu_${nu_hmm}_$filename" }
      maxForks 1
      
-     conda "anaconda::python"
+     conda "numpy bioconda::dendropy=4.5.2 conda-forge::matplotlib=3.3.4 pandas"
      
     
      input:
@@ -46,7 +45,7 @@ process BaciSim {
           
      
      """
-       python3.8  $PWD/BaciSim.py -n ${genome} -g ${params.genomeSize} -l ${params.recom_len} -r ${params.recom_rate}  -nu ${params.nu_sim}  -t ${params.tMRCA}
+       python3.8  $PWD/bin/BaciSim.py -n ${genome} -g ${params.genomeSize} -l ${params.recom_len} -r ${params.recom_rate}  -nu ${params.nu_sim}  -t ${params.tMRCA}
         
      """
 }
@@ -56,6 +55,8 @@ process seq_gen {
 
     publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}_nu_${nu_hmm}/num_${repeat_range}_nu_${nu_hmm}_$filename" }
     maxForks 1
+
+    conda "bioconda::seq-gen"
 
     input:
         path BaciSimtrees 
@@ -81,6 +82,9 @@ process Gubbins {
     publishDir "${params.out}" , mode: 'copy' , saveAs: { filename -> "num_${repeat_range}_nu_${nu_hmm}/num_${repeat_range}_nu_${nu_hmm}_$filename" }
     maxForks 1
 
+    conda  "bioconda::gubbins=2.4.1"
+
+
      input:
         path wholegenome
         each repeat_range
@@ -91,7 +95,7 @@ process Gubbins {
         path "gubbins.final_tree.tre" , emit: gubbinstree
     
     """   
-     run_gubbins  -r GTRGAMMA -p gubbins   ${wholegenome} 
+     run_gubbins.py  -r GTRGAMMA -p gubbins   ${wholegenome} 
       
     """
 }
@@ -101,10 +105,15 @@ process get_raxml_tree {
 
     publishDir "${params.out}" , mode: 'copy' , saveAs: { filename -> "num_${repeat_range}_nu_${nu_hmm}/num_${repeat_range}_nu_${nu_hmm}_$filename" }
 
+    conda "bioconda::raxml=8.2.12"
+
+
     input:
         path wholegenome
         each repeat_range
         each nu_hmm
+
+
     
     output:
         path 'RAxML_bestTree.tree', emit: myRaxML
@@ -121,7 +130,9 @@ process CFML {
 
    publishDir "${params.out}" , mode: 'copy' , saveAs: { filename -> "num_${repeat_range}_nu_${nu_hmm}/num_${repeat_range}_nu_${nu_hmm}_$filename" }
 
-     input:
+   conda "bioconda::clonalframeml=1.12"
+    
+    input:
         path wholegenome
         path myRaxML 
         each repeat_range
@@ -143,6 +154,8 @@ process CFML {
 process phyloHMM {
 
      publishDir "${params.out}" , mode: 'copy' , saveAs: { filename -> "num_${repeat_range}_nu_${nu_hmm}/num_${repeat_range}_nu_${nu_hmm}_$filename" }
+     
+     conda "numpy bioconda::dendropy=4.5.2 conda-forge::matplotlib=3.3.4 pandas scikit-learn conda-forge::hmmlearn"
 
      input:
         path wholegenome
@@ -163,7 +176,7 @@ process phyloHMM {
 
 //      -p ${mix_prob} -nu ${nu_hmm}
      """
-       python3.8 /home/nehleh/PhyloCode/RecomPhyloHMM/bin/phyloHMM.py -t ${myRaxML} -a ${wholegenome}  -x ${params.xml_file} -l ${recomlog}  -ct ${CFMLtree} -c ${CFML_recom} -nu ${nu_hmm} 
+       python3.8  $PWD/bin/phyloHMM.py -t ${myRaxML} -a ${wholegenome}  -x ${params.xml_file} -l ${recomlog}  -ct ${CFMLtree} -c ${CFML_recom} -nu ${nu_hmm} 
        
         
      """
@@ -174,6 +187,8 @@ process phyloHMM {
 process Beast_alignment {
 
      publishDir "${params.out}/n_${genome}" , mode: 'copy' , saveAs: { filename -> "n_${genome}_nu_${nu_hmm}_$filename" }
+     
+     conda "bioconda::beast2"
 
      input:
          path original_XML
@@ -186,7 +201,7 @@ process Beast_alignment {
          path 'wholegenome.trees' , emit:  beastSeqTree
      
      """
-       /home/nehleh/Documents/0_Research/Software/BEAST_with_JRE.v2.6.3.Linux/beast/bin/beast  ${original_XML}        
+       beast2  ${original_XML}        
      """
 }
 
@@ -194,6 +209,8 @@ process Beast_alignment {
 process treeannotator_alignment {
 
      publishDir "${params.out}/n_${genome}" , mode: 'copy' , saveAs: { filename -> "n_${genome}_nu_${nu_hmm}_$filename" }
+     
+     conda "bioconda::beast"
 
      input:
      
@@ -205,7 +222,7 @@ process treeannotator_alignment {
          path 'beastSeqTree.nexus' , emit: SeqTree
      
      """
-       /home/nehleh/Documents/0_Research/Software/BEAST_with_JRE.v2.6.3.Linux/beast/bin/treeannotator -b 10  ${beastSeqTree}  beastSeqTree.nexus      
+       treeannotator -b 10  ${beastSeqTree}  beastSeqTree.nexus      
      """
 }
 
@@ -213,6 +230,8 @@ process treeannotator_alignment {
 process convertor_SeqTree {
 
      publishDir "${params.out}/n_${genome}" , mode: 'copy' , saveAs: { filename -> "n_${genome}_nu_${nu_hmm}_$filename" }
+     
+     conda "bioconda::dendropy=4.5.2"
      
      input:
         path SeqTree
@@ -223,7 +242,7 @@ process convertor_SeqTree {
          path 'beastSeqTree.newick' , emit : beastTree
          
      """
-       python3.8 /home/nehleh/PhyloCode/RecomPhyloHMM/bin/NexusToNewick.py -t ${SeqTree} -o 'beastSeqTree.newick'
+       python3.8 $PWD/bin/NexusToNewick.py -t ${SeqTree} -o 'beastSeqTree.newick'
         
      """
 }
@@ -244,7 +263,7 @@ process Beast_partial {
          path 'wholegenome.trees' , emit: beastPartialTree
      
      """
-       /home/nehleh/Documents/0_Research/Software/BEAST_with_JRE.v2.6.3.Linux/beast/bin/beast  ${partial_XML}        
+       beast  ${partial_XML}        
      """
 }
 
@@ -267,7 +286,7 @@ process treeannotator_partial {
 
      
      """
-       /home/nehleh/Documents/0_Research/Software/BEAST_with_JRE.v2.6.3.Linux/beast/bin/treeannotator -b 10  ${beastPartialTree}  beastOurTree.nexus      
+       treeannotator -b 10  ${beastPartialTree}  beastOurTree.nexus      
      """
 }
 
@@ -288,7 +307,7 @@ process convertor_ourTree {
          path 'beastHMMTree.newick' , emit:  beastHMMTree
          
      """
-       python3.8 /home/nehleh/PhyloCode/RecomPhyloHMM/bin/NexusToNewick.py -t ${beastOurTree} -o 'beastHMMTree.newick'
+       python3.8 $PWD/bin/NexusToNewick.py -t ${beastOurTree} -o 'beastHMMTree.newick'
         
      """
 }
@@ -312,7 +331,7 @@ process mergeTreeFiles {
          path 'allOtherTrees.newick' , emit: allOtherTrees
      
      """
-       python3.8 /home/nehleh/PhyloCode/RecomPhyloHMM/bin/mergeFiles.py ${beastHMMTree}  ${myRaxML}  ${beastTree}  ${CFMLtree}  ${gubbinstree} > allOtherTrees.newick
+       python3.8 $PWD/bin/mergeFiles.py ${beastHMMTree}  ${myRaxML}  ${beastTree}  ${CFMLtree}  ${gubbinstree} > allOtherTrees.newick
        
      """
 
@@ -336,7 +355,7 @@ process TreeCmp {
          path 'TreeCmpResult.result' , emit: Comparison     
     
      """
-       java -jar /home/nehleh/Documents/0_Research/Software/TreeCmp_v2.0-b76/bin/treeCmp.jar  -r ${clonaltree}  -i ${allOtherTrees} -d qt pd rf ms um rfw gdu -o TreeCmpResult.result -W
+       java -jar treeCmp.jar  -r ${clonaltree}  -i ${allOtherTrees} -d qt pd rf ms um rfw gdu -o TreeCmpResult.result -W
      """
 }
 
@@ -358,7 +377,7 @@ process RMSE_summary {
          path 'RMSE_comparison.jpeg' , emit: rmse_plot
     
      """
-       python3.8 /home/nehleh/PhyloCode/RecomPhyloHMM/bin/rmse_summary.py -f ${rmse}
+       python3.8 $PWD/bin/rmse_summary.py -f ${rmse}
        
      """
 }
@@ -370,22 +389,21 @@ workflow {
 
     BaciSim(genome,repeat_range,nu_hmm)
     
-//    seq_gen(BaciSim.out.BaciSimtrees,frequencies,rates,repeat_range,nu_hmm)
-//    
+    seq_gen(BaciSim.out.BaciSimtrees,frequencies,rates,repeat_range,nu_hmm)
+    
 //    Gubbins(seq_gen.out.wholegenome,repeat_range,nu_hmm)
 
-//    get_raxml_tree(seq_gen.out.wholegenome,repeat_range,nu_hmm)
-//   
-//    CFML(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,repeat_range,nu_hmm)
-//   
-//    phyloHMM(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,BaciSim.out.recomlog,CFML.out.CFML_recom,CFML.out.CFMLtree,nu_hmm,BaciSim.out.n_repeat)
-////    nu_hmm,mix_prob,
+    get_raxml_tree(seq_gen.out.wholegenome,repeat_range,nu_hmm)
    
+    CFML(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,repeat_range,nu_hmm)
+   
+    phyloHMM(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,BaciSim.out.recomlog,CFML.out.CFML_recom,CFML.out.CFMLtree,nu_hmm,repeat_range)
+ 
 //    collectedFile = phyloHMM.out.rmse.collectFile(name:"collected_rmse.csv",storeDir:"/home/nehleh/work/results/Summary_Results", keepHeader:false) 
   
-//    Beast_alignment(phyloHMM.out.original_XML,BaciSim.out.n_genome,nu_hmm)
-//    
-//    treeannotator_alignment(Beast_alignment.out.beastSeqTree,BaciSim.out.n_genome,nu_hmm)
+    Beast_alignment(phyloHMM.out.original_XML,genome,nu_hmm)
+    
+    treeannotator_alignment(Beast_alignment.out.beastSeqTree,genome,nu_hmm)
 //
 //    convertor_SeqTree(treeannotator_alignment.out.SeqTree,BaciSim.out.n_genome,nu_hmm)   
 //    

@@ -1,7 +1,7 @@
 nextflow.enable.dsl = 2
 
 
-params.genomeSize = '1000'
+params.genomeSize = '1500'
 params.recom_len = '500'
 params.recom_rate = '0.05'
 params.tMRCA = '0.01'
@@ -388,13 +388,13 @@ process phyloHMM_beast {
 //        each mix_prob
         each repeat_range
 
-     output:
-        path 'rmse.rmse' , emit : rmse_partialBeast 
-        path 'PhyloHMM_Recombination.jpeg' , emit: phyloHMMFig_partialBeast
+//     output:
+//        path 'rmse.rmse' , emit : rmse_partialBeast 
+//        path 'PhyloHMM_Recombination.jpeg' , emit: phyloHMMFig_partialBeast
 
 //      -p ${mix_prob} -nu ${nu_hmm}
      """
-       python3.8 /home/nehleh/PhyloCode/RecomPhyloHMM/bin/phyloHMM.py -t ${beastHMMTree} -a ${wholegenome}  -l ${recomlog}  -nu ${nu_hmm} -ct ${CFMLtree} -c ${CFML_recom} 
+       python3.8 /home/nehleh/PhyloCode/RecomPhyloHMM/bin/phyloHMM.py -t ${beastHMMTree} -a ${wholegenome}  -l ${recomlog}  -nu ${nu_hmm} -ct ${CFMLtree} -c ${CFML_recom} -x ${params.xml_file}
        
         
      """
