@@ -1,7 +1,7 @@
 nextflow.enable.dsl = 2
 
 
-params.genomeSize = '800'
+params.genomeSize = '1000'
 params.recom_len = '200'
 params.recom_rate = '0.05'
 params.tMRCA = '0.01'
@@ -10,14 +10,14 @@ params.xml_file = "${PWD}/bin/GTR_template.xml"
 params.out =  "${PWD}/results" 
 
 
-genome = Channel.from(7)
+genome = Channel.from(10)
 frequencies = Channel.of(' 0.2184,0.2606,0.3265,0.1946' )
 rates =  Channel.of('0.975070 ,4.088451 ,0.991465 ,0.640018 ,3.840919 ,1')
 //nu_hmm = Channel.from(0.005,0.01,0.02,0.03,0.04)
 //mix_prob = Channel.from(0.2,0.3,0.4,0.5,0.6,0.7)
 nu_hmm = Channel.from(0.02)
 mix_prob = Channel.from(0.7)
-repeat_range = Channel.from(1)
+repeat_range = Channel.from(1..4)
 
 
 
@@ -59,7 +59,7 @@ process seq_gen {
     conda "bioconda::seq-gen"
 
     input:
-        path BaciSimtrees 
+        each BaciSimtrees 
         val f 
         val r 
         each repeat_range
@@ -86,7 +86,7 @@ process Gubbins {
 
 
      input:
-        path wholegenome
+        each wholegenome
         each repeat_range
         each nu_hmm
         
@@ -391,19 +391,19 @@ workflow {
     
     seq_gen(BaciSim.out.BaciSimtrees,frequencies,rates,repeat_range,nu_hmm)
     
-//    Gubbins(seq_gen.out.wholegenome,repeat_range,nu_hmm)
+    Gubbins(seq_gen.out.wholegenome,repeat_range,nu_hmm)
 
-    get_raxml_tree(seq_gen.out.wholegenome,repeat_range,nu_hmm)
-   
-    CFML(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,repeat_range,nu_hmm)
-   
-    phyloHMM(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,BaciSim.out.recomlog,CFML.out.CFML_recom,CFML.out.CFMLtree,nu_hmm,repeat_range)
+//    get_raxml_tree(seq_gen.out.wholegenome,repeat_range,nu_hmm)
+//   
+//    CFML(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,repeat_range,nu_hmm)
+//   
+//    phyloHMM(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,BaciSim.out.recomlog,CFML.out.CFML_recom,CFML.out.CFMLtree,nu_hmm,repeat_range)
  
 //    collectedFile = phyloHMM.out.rmse.collectFile(name:"collected_rmse.csv",storeDir:"/home/nehleh/work/results/Summary_Results", keepHeader:false) 
   
-    Beast_alignment(phyloHMM.out.original_XML,genome,nu_hmm)
-    
-    treeannotator_alignment(Beast_alignment.out.beastSeqTree,genome,nu_hmm)
+//    Beast_alignment(phyloHMM.out.original_XML,genome,nu_hmm)
+//    
+//    treeannotator_alignment(Beast_alignment.out.beastSeqTree,genome,nu_hmm)
 //
 //    convertor_SeqTree(treeannotator_alignment.out.SeqTree,BaciSim.out.n_genome,nu_hmm)   
 //    
