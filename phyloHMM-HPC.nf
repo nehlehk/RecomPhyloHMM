@@ -26,7 +26,7 @@ repeat_range = Channel.from(1..4)
 
 process BaciSim {
 
-     publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}_nu_${nu_hmm}/num_${repeat_range}_nu_${nu_hmm}_$filename" }
+     publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}_$filename" }
      maxForks 1
      
      conda "numpy bioconda::dendropy=4.5.2 conda-forge::matplotlib=3.3.4 pandas"
@@ -38,10 +38,10 @@ process BaciSim {
          each nu_hmm
 
      output:
-         path "BaciSimTrees.tree", emit: BaciSimtrees
-         path "clonaltree.tree", emit: clonaltree
-         path "BaciSim_Log.txt" , emit: recomlog
-         path "BaciSim_Recombination.jpeg", emit: SimFig
+         tuple val(repeat_range), path('BaciSimTrees.tree') , emit: BaciSimtrees
+         tuple val(repeat_range), path('clonaltree.tree'), emit: clonaltree
+         tuple val(repeat_range), path('BaciSim_Log.txt') , emit: recomlog
+         tuple val(repeat_range), path('BaciSim_Recombination.jpeg'), emit: SimFig
           
      
      """
@@ -53,25 +53,23 @@ process BaciSim {
 
 process seq_gen {
 
-    publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}_nu_${nu_hmm}/num_${repeat_range}_nu_${nu_hmm}_$filename" }
+    publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}_$filename" }
     maxForks 1
 
     conda "bioconda::seq-gen"
 
     input:
-        each BaciSimtrees 
+        tuple val(repeat_range),  path('BaciSimTrees.tree')
         val f 
         val r 
-        each repeat_range
-        each nu_hmm
         
     
     output:
         path "wholegenome.fasta" , emit: wholegenome
     
     """     
-     numTrees=\$(wc -l < ${BaciSimtrees} | awk '{ print \$1 }')
-     seq-gen  -mGTR  -l${params.genomeSize} -r$r -f$f -s0.2 -of ${BaciSimtrees}  -p \$numTrees > wholegenome.fasta
+     numTrees=\$(wc -l < BaciSimTrees.tree | awk '{ print \$1 }')
+     seq-gen  -mGTR  -l${params.genomeSize} -r$r -f$f -s0.2 -of BaciSimTrees.tree  -p \$numTrees > wholegenome.fasta
 
     """
 }
@@ -391,7 +389,7 @@ workflow {
     
     seq_gen(BaciSim.out.BaciSimtrees,frequencies,rates,repeat_range,nu_hmm)
     
-    Gubbins(seq_gen.out.wholegenome,repeat_range,nu_hmm)
+//    Gubbins(seq_gen.out.wholegenome,repeat_range,nu_hmm)
 
 //    get_raxml_tree(seq_gen.out.wholegenome,repeat_range,nu_hmm)
 //   

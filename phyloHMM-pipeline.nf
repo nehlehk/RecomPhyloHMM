@@ -1,23 +1,23 @@
 nextflow.enable.dsl = 2
 
 
-params.genomeSize = '1200'
-params.recom_len = '400'
-params.recom_rate = '0.05'
+params.genomeSize = '5000'
+params.recom_len = '500'
+params.recom_rate = '0.02'
 params.tMRCA = '0.01'
 params.nu_sim = '0.2'
 params.xml_file = '/home/nehleh/Documents/GTR_template.xml'
 params.out = '/home/nehleh/work/results/'
 
 
-genome = Channel.from(8)
+genome = Channel.from(10)
 frequencies = Channel.of(' 0.2184,0.2606,0.3265,0.1946' )
 rates =  Channel.of('0.975070 ,4.088451 ,0.991465 ,0.640018 ,3.840919 ,1')
 //nu_hmm = Channel.from(0.005,0.01,0.02,0.03,0.04)
 //mix_prob = Channel.from(0.2,0.3,0.4,0.5,0.6,0.7)
 nu_hmm = Channel.from(0.02)
 mix_prob = Channel.from(0.7)
-repeat_range = Channel.from(1..4)
+repeat_range = Channel.value(1..4)
 
 
 
@@ -27,20 +27,29 @@ repeat_range = Channel.from(1..4)
 
 process BaciSim {
 
-     publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}_nu_${nu_hmm}/num_${repeat_range}_nu_${nu_hmm}_$filename" }
+//     publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}_nu_${nu_hmm}/num_${repeat_range}_nu_${nu_hmm}_$filename" }
+     publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}_$filename" }
      maxForks 1
      
     
      input:
-         each genome 
+         val genome 
          each repeat_range
          each nu_hmm
 
      output:
-         path "BaciSimTrees.tree", emit: BaciSimtrees
-         path "clonaltree.tree", emit: clonaltree
-         path "BaciSim_Log.txt" , emit: recomlog
-         path "BaciSim_Recombination.jpeg", emit: SimFig
+         tuple val(repeat_range), path("BaciSimTrees.tree") , emit: BaciSimtrees
+         tuple val(repeat_range), path('clonaltree.tree'), emit: clonaltree
+         tuple val(repeat_range), path('BaciSim_Log.txt') , emit: recomlog
+         tuple val(repeat_range), path('BaciSim_Recombination.jpeg'), emit: SimFig
+         
+//         path "BaciSimTrees.tree", emit: BaciSimtrees
+//         path "clonaltree.tree", emit: clonaltree
+//         path "BaciSim_Log.txt" , emit: recomlog
+//         path "BaciSim_Recombination.jpeg", emit: SimFig
+//         val "${repeat_range}" , emit: B_repeat
+//
+
           
      
      """
@@ -52,25 +61,31 @@ process BaciSim {
 
 process seq_gen {
 
-    publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}_nu_${nu_hmm}/num_${repeat_range}_nu_${nu_hmm}_$filename" }
+//    publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}_nu_${nu_hmm}/num_${repeat_range}_nu_${nu_hmm}_$filename" }
+    publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}_$filename" }
     maxForks 1
     
     
 
     input:
-        each BaciSimtrees 
+
+        tuple val(repeat_range),  path('test.tree')
+//        each BaciSimtrees 
         val f 
         val r 
-        each repeat_range
-        each nu_hmm
+//        each B_repeat
+//        each nu_hmm
+//        each repeat_range
         
     
     output:
-        path "wholegenome.fasta" , emit: wholegenome
+        path "wholegenome_${repeat_range}.fasta" , emit: wholegenome
+
     
-    """     
-     numTrees=\$(wc -l < ${BaciSimtrees} | awk '{ print \$1 }')
-     seq-gen  -mGTR  -l${params.genomeSize} -r$r -f$f -s0.2 -of ${BaciSimtrees}  -p \$numTrees > wholegenome.fasta
+    """ 
+     numTrees=\$(wc -l < test.tree | awk '{ print \$1 }')
+     echo Processing ${repeat_range}
+     seq-gen  -mGTR  -l${params.genomeSize} -r$r -f$f -s0.2 -of test.tree  -p \$numTrees > wholegenome_${repeat_range}.fasta
 
     """
 }
@@ -78,13 +93,15 @@ process seq_gen {
 
 process Gubbins {
 
-    publishDir "${params.out}" , mode: 'copy' , saveAs: { filename -> "num_${repeat_range}_nu_${nu_hmm}/num_${repeat_range}_nu_${nu_hmm}_$filename" }
+//    publishDir "${params.out}" , mode: 'copy' , saveAs: { filename -> "num_${repeat_range}_nu_${nu_hmm}/num_${repeat_range}_nu_${nu_hmm}_$filename" }
+    publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "${wholegenome}/${wholegenome}_$filename" }
     maxForks 1
 
      input:
-        each wholegenome
-        each repeat_range
-        each nu_hmm
+        path wholegenome
+//        each B_repeat
+//        each repeat_range
+//        each nu_hmm
         
     
     output:
@@ -99,12 +116,14 @@ process Gubbins {
 
 process get_raxml_tree {
 
-    publishDir "${params.out}" , mode: 'copy' , saveAs: { filename -> "num_${repeat_range}_nu_${nu_hmm}/num_${repeat_range}_nu_${nu_hmm}_$filename" }
+//    publishDir "${params.out}" , mode: 'copy' , saveAs: { filename -> "num_${repeat_range}_nu_${nu_hmm}/num_${repeat_range}_nu_${nu_hmm}_$filename" }
+    publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "${wholegenome}_$filename" }
+    maxForks 1
 
     input:
-        each wholegenome
-        each repeat_range
-        each nu_hmm
+        path wholegenome
+//        each repeat_range
+//        each nu_hmm
     
     output:
         path 'RAxML_bestTree.tree', emit: myRaxML
@@ -119,13 +138,15 @@ process get_raxml_tree {
 
 process CFML {
 
-   publishDir "${params.out}" , mode: 'copy' , saveAs: { filename -> "num_${repeat_range}_nu_${nu_hmm}/num_${repeat_range}_nu_${nu_hmm}_$filename" }
+//   publishDir "${params.out}" , mode: 'copy' , saveAs: { filename -> "num_${repeat_range}_nu_${nu_hmm}/num_${repeat_range}_nu_${nu_hmm}_$filename" }
+   publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "${wholegenome}_${myRaxML}_$filename" }
+   maxForks 1
 
      input:
-        each wholegenome
+        path wholegenome
         path myRaxML 
-        each repeat_range
-        each nu_hmm
+//        each repeat_range
+//        each nu_hmm
         
     
     output:
@@ -142,7 +163,8 @@ process CFML {
 
 process phyloHMM {
 
-     publishDir "${params.out}" , mode: 'copy' , saveAs: { filename -> "num_${repeat_range}_nu_${nu_hmm}/num_${repeat_range}_nu_${nu_hmm}_$filename" }
+//     publishDir "${params.out}" , mode: 'copy' , saveAs: { filename -> "num_${repeat_range}_nu_${nu_hmm}/num_${repeat_range}_nu_${nu_hmm}_$filename" }
+     publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "${wholegenome}/${wholegenome}_$filename" }
 
      input:
         path wholegenome
@@ -152,7 +174,7 @@ process phyloHMM {
         path CFMLtree
         each nu_hmm
 //        each mix_prob
-        each repeat_range
+//        each repeat_range
 
      output:
         path 'RecomPartial.xml' , emit: partial_XML 
@@ -160,6 +182,7 @@ process phyloHMM {
         path 'rmse.rmse' , emit : rmse 
         path 'PhyloHMM_Recombination.jpeg' , emit: phyloHMMFig
         path 'CFML_Recombination.jpeg' , emit: CFMLFig
+        path 'Recom_phyloHMM_Log.txt' , emit: phyloHMMLog
 
 //      -p ${mix_prob} -nu ${nu_hmm}
      """
@@ -408,15 +431,15 @@ workflow {
 
     BaciSim(genome,repeat_range,nu_hmm)
     
-    seq_gen(BaciSim.out.BaciSimtrees,frequencies,rates,repeat_range,nu_hmm)
+    seq_gen(BaciSim.out.BaciSimtrees,frequencies,rates)
     
-    Gubbins(seq_gen.out.wholegenome,repeat_range,nu_hmm)
+//    Gubbins(seq_gen.out.wholegenome)
 
-//    get_raxml_tree(seq_gen.out.wholegenome,repeat_range,nu_hmm)
+//    get_raxml_tree(seq_gen.out.wholegenome)
 //   
-//    CFML(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,repeat_range,nu_hmm)
-//   
-//    phyloHMM(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,BaciSim.out.recomlog,CFML.out.CFML_recom,CFML.out.CFMLtree,nu_hmm,repeat_range)
+//    CFML(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML)
+   
+//    phyloHMM(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,BaciSim.out.recomlog,CFML.out.CFML_recom,CFML.out.CFMLtree,nu_hmm)
 //    nu_hmm,mix_prob,
    
 //    collectedFile = phyloHMM.out.rmse.collectFile(name:"collected_rmse.csv",storeDir:"/home/nehleh/work/results/Summary_Results", keepHeader:false) 

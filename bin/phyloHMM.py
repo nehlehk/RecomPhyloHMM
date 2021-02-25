@@ -495,6 +495,8 @@ def recom_resultFig(tree,tipdata,threshold,internalNode):
     ax.axis('on')
     ax.set_yticklabels([])
     plt.savefig("PhyloHMM_Recombination.jpeg")
+
+    return output
 # **********************************************************************************************************************
 def internal_plot(posterior,hiddenStates,score):
     for i in range(len(posterior)):
@@ -698,6 +700,44 @@ def give_descendents_CFML(tree,node_label,result):
             result.add(r_node)
     return result
 # **********************************************************************************************************************
+def recombination_range(data):
+  r = []
+  idx = []   # result list of tuples
+  ind = 0    # index of first element of each range of zeros or non-zeros
+  for n,i in enumerate(data):
+      if (n+1 == len(data)) or (data[n] != data[n+1]):
+          idx.append((ind,n, data[n]))
+          ind = n+1
+
+  for i in range(len(idx)):
+    if idx[i][2] == 1:
+      r.append(idx[i])
+
+  return r
+# **********************************************************************************************************************
+def phyloHMM_Log(tree,data):
+    nodes = []
+    starts = []
+    ends = []
+    recomlens = []
+    for i in range(output.shape[1]):
+      temp = recombination_range(output[:,i])
+      if len(temp) > 0:
+        starts.append(temp[0][0])
+        ends.append(temp[0][1])
+        recomlens.append(temp[0][1] - temp[0][0])
+        if i < tips_num:
+          nodes.append(give_taxon(tree,i))
+        else:
+          nodes.append(i)
+
+    all_data = {'nodes':nodes , 'start':starts , 'end':ends, 'len':recomlens }
+    df = pd.DataFrame(all_data)
+    df = df.sort_values(by=['nodes'], ascending=[True])
+    df.to_csv('Recom_phyloHMM_Log.txt', sep='\t', header=True , index = False)
+
+    return df
+# **********************************************************************************************************************
 
 
 
@@ -780,7 +820,8 @@ if __name__ == "__main__":
 
     tree = Tree.get_from_path(tree_path, 'newick')
     set_index(tree, alignment)
-    recom_resultFig(tree,tipdata,mixtureProb,internalNode)
+    output = recom_resultFig(tree,tipdata,mixtureProb,internalNode)
+    phyloHMM_log = phyloHMM_Log(tree, output)
 
     make_beast_xml_partial(tipdata,tree,xml_path)
     make_beast_xml_original(tree,xml_path)
