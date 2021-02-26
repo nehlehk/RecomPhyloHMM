@@ -387,7 +387,7 @@ workflow {
 
     BaciSim(genome,repeat_range,nu_hmm)
     
-    seq_gen(BaciSim.out.BaciSimtrees,frequencies,rates,repeat_range,nu_hmm)
+    seq_gen(BaciSim.out.BaciSimtrees,frequencies,rates)
     
 //    Gubbins(seq_gen.out.wholegenome,repeat_range,nu_hmm)
 
