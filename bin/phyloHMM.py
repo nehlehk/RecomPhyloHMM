@@ -824,7 +824,7 @@ if __name__ == "__main__":
     phyloHMM_log = phyloHMM_Log(tree, output)
 
     make_beast_xml_partial(tipdata,tree,xml_path)
-    make_beast_xml_original(tree,xml_path)
+    # make_beast_xml_original(tree,xml_path)
 
 
     realData = real_recombination(recomLog)
