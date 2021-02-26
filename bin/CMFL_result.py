@@ -5,6 +5,12 @@ import pandas as pd
 from dendropy import Tree
 import dendropy
 
+
+# **********************************************************************************************************************
+def set_label(tree):
+    for node in tree.postorder_node_iter():
+        if node.is_leaf():
+            node.label = node.taxon.label
 # **********************************************************************************************************************
 def CFML_recombination(CFML_recomLog):
     CFMLData = np.zeros((alignment_len, nodes_number))
@@ -66,13 +72,14 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     tree_path = args.treeFile
-    tips_num = args.tips_num
     cfml_path = args.cfmlFile
     cfml_tree = args.cfmltreefile
     genomefile = args.alignmentFile
 
 
     tree = Tree.get_from_path(tree_path, 'newick')
+    cfml_tree = Tree.get_from_path(cfml_tree, 'newick')
+    set_label(cfml_tree)
     alignment = dendropy.DnaCharacterMatrix.get(file=open(genomefile), schema="fasta")
     nodes_number = len(tree.nodes())
     tips_num = len(alignment)

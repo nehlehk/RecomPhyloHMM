@@ -14,7 +14,7 @@ genome = Channel.value(8)
 frequencies = Channel.value(' 0.2184,0.2606,0.3265,0.1946' )
 rates =  Channel.value('0.975070 ,4.088451 ,0.991465 ,0.640018 ,3.840919 ,1')
 nu_hmm = Channel.of(0.01,0.02)
-mix_prob = Channel.of(0.5,0.6,0.7)
+mix_prob = Channel.of(0.6,0.7)
 repeat_range = Channel.value(1..3)
 
 
@@ -78,7 +78,6 @@ process seq_gen {
 process Gubbins {
 
     publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_$filename" }
-    maxForks 1
 
      input:
         path wholegenome
@@ -119,7 +118,6 @@ process get_raxml_tree {
 process make_xml_seq {
 
     publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_$filename" }
-    maxForks 1
 
     input:
         path wholegenome
@@ -140,7 +138,7 @@ process make_xml_seq {
 process Beast_alignment {
 
     publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_$filename" }
-    maxForks 1
+
 
      input:
          path original_XML
@@ -160,7 +158,7 @@ process Beast_alignment {
 process treeannotator_alignment {
 
      publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_$filename" }  
-     maxForks 1  
+
      
 
      input:
@@ -180,7 +178,7 @@ process treeannotator_alignment {
 process convertor_SeqTree {
 
      publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_$filename" }  
-     maxForks 1 
+
      
      input:
         path SeqTree
@@ -200,7 +198,6 @@ process convertor_SeqTree {
 process CFML {
 
    publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_$filename" }
-   maxForks 1
 
      input:
         path wholegenome
@@ -220,17 +217,42 @@ process CFML {
 }
 
 
+
+process CFML_result {
+
+     publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_$filename" }
+
+     input:
+        path wholegenome
+        path myRaxML 
+        path CFML_recom
+        path CFMLtree
+        val repeat_range
+
+
+
+     output:
+        path 'CFML_Recombination.jpeg' , emit: CFMLFig
+
+
+     """
+       python3.8 /home/nehleh/PhyloCode/RecomPhyloHMM/bin/CMFL_result.py -t ${myRaxML} -a ${wholegenome} -ct ${CFMLtree} -c ${CFML_recom} 
+       
+        
+     """
+}
+
+
+
 process phyloHMM {
 
      publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_nu_${nu_hmm}_prob_${mix_prob}_$filename" }
-     maxForks 1
 
      input:
         path wholegenome
         path myRaxML 
         tuple val(repeat_range), path('recomlog') 
         path CFML_recom
-        path CFMLtree
         val repeat_range
         each nu_hmm
         each mix_prob
@@ -238,15 +260,15 @@ process phyloHMM {
 
      output:
         path 'RecomPartial.xml' , emit: partial_XML 
-        path 'rmse.rmse' , emit : rmse 
+        path 'rmse.csv' , emit : rmse 
         path 'PhyloHMM_Recombination.jpeg' , emit: phyloHMMFig
-        path 'CFML_Recombination.jpeg' , emit: CFMLFig
         path 'Recom_phyloHMM_Log.txt' , emit: phyloHMMLog
         val nu_hmm , emit: my_nu
         val mix_prob , emit: prob
+        
 
      """
-       python3.8 /home/nehleh/PhyloCode/RecomPhyloHMM/bin/phyloHMM.py -t ${myRaxML} -a ${wholegenome}  -x ${params.xml_file} -l ${recomlog}  -ct ${CFMLtree} -c ${CFML_recom} -nu ${nu_hmm} -p ${mix_prob}
+       python3.8 /home/nehleh/PhyloCode/RecomPhyloHMM/bin/phyloHMM.py -t ${myRaxML} -a ${wholegenome}  -x ${params.xml_file} -l ${recomlog}  -c ${CFML_recom} -nu ${nu_hmm} -p ${mix_prob}
        
         
      """
@@ -260,7 +282,7 @@ process phyloHMM {
 process Beast_partial {
 
      publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_nu_${nu_hmm}_prob_${mix_prob}_$filename" }
-     maxForks 1
+
 
      input:
         path partial_XML
@@ -283,7 +305,7 @@ process Beast_partial {
 process treeannotator_partial {
 
      publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_nu_${nu_hmm}_prob_${mix_prob}_$filename" }
-     maxForks 1
+
 
      input:   
         path beastPartialTree
@@ -307,7 +329,7 @@ process treeannotator_partial {
 process convertor_ourTree {
 
      publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_nu_${nu_hmm}_prob_${mix_prob}_$filename" }
-     maxForks 1
+
      
      
      input:
@@ -453,12 +475,14 @@ workflow {
 
     convertor_SeqTree(treeannotator_alignment.out.SeqTree,seq_gen.out.range)  
    
-//    CFML(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,seq_gen.out.range)
-//   
-//    phyloHMM(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,BaciSim.out.recomlog,CFML.out.CFML_recom,CFML.out.CFMLtree,seq_gen.out.range,nu_hmm,mix_prob)
-//   
-//    collectedFile = phyloHMM.out.rmse.collectFile(name:"collected_rmse.csv",storeDir:"/home/nehleh/work/results/Summary_Results", keepHeader:true) 
-//    
+    CFML(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,seq_gen.out.range)
+
+    CFML_result(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,CFML.out.CFML_recom,CFML.out.CFMLtree,seq_gen.out.range)
+   
+    phyloHMM(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,BaciSim.out.recomlog,CFML.out.CFML_recom,seq_gen.out.range,nu_hmm,mix_prob)
+    
+    collectedFile = phyloHMM.out.rmse.collectFile(name:"rmse.csv",storeDir:"/home/nehleh/work/results/Summary_Results", keepHeader:false) 
+      
 //    Beast_partial(phyloHMM.out.partial_XML,genome,nu_hmm,seq_gen.out.range)
 //    
 //    treeannotator_partial(Beast_partial.out.beastPartialTree,genome,nu_hmm,seq_gen.out.range)

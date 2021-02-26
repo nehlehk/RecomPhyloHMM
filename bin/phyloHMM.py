@@ -639,12 +639,12 @@ def comparison_plot(RealData,predictionData):
         ax.legend(loc='best')
         plt.savefig("taxa" + str(i) + ".jpeg")
 # **********************************************************************************************************************
-def write_rmse(nu,rmse_real_predict,rmse_real_CFML):
-    with open('rmse.rmse', mode='w') as rmse_file:
+def write_rmse(nu,mixtureProb,rmse_real_phylohmm,rmse_real_CFML):
+    with open('rmse.csv', mode='w') as rmse_file:
         rmse_writer = csv.writer(rmse_file, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
 
         # rmse_writer.writerow(['nu_hmm','rmse_real_predict','rmse_clonal_predict','rmse_clonal_real'])
-        rmse_writer.writerow([nu, rmse_real_predict,rmse_real_CFML])
+        rmse_writer.writerow([nu,mixtureProb,rmse_real_phylohmm,rmse_real_CFML])
 # **********************************************************************************************************************
 def CFML_recombination(CFML_recomLog):
     CFMLData = np.zeros((alignment_len, nodes_number))
@@ -768,7 +768,7 @@ if __name__ == "__main__":
     parser.add_argument('-m', "--transmat", type=list, default= [[0.997, 0.001, 0.001, 0.001],[0.001, 0.997, 0.001, 0.001],[0.001, 0.001, 0.997, 0.001],[0.001, 0.001, 0.001, 0.997]], help='rates')
     parser.add_argument('-x', "--xmlFile", type=str, help='xmlFile')
     parser.add_argument('-c', "--cfmlFile", type=str, help='cfmlFile')
-    parser.add_argument('-ct', "--cfmltreefile", type=str, help='cfmltreefile')
+    # parser.add_argument('-ct', "--cfmltreefile", type=str, help='cfmltreefile')
     args = parser.parse_args()
 
     tree_path = args.treeFile
@@ -781,7 +781,7 @@ if __name__ == "__main__":
     p_start = args.startProb
     p_trans = args.transmat
     cfml_path = args.cfmlFile
-    cfml_tree = args.cfmltreefile
+    # cfml_tree = args.cfmltreefile
     mixtureProb = args.mixtureProb
     # cfml_path = '/home/nehleh/CFML.importation_status.txt'
 
@@ -789,8 +789,8 @@ if __name__ == "__main__":
 
 
     tree = Tree.get_from_path(tree_path, 'newick')
-    cfml_tree = Tree.get_from_path(cfml_tree, 'newick')
-    set_label(cfml_tree)
+    # cfml_tree = Tree.get_from_path(cfml_tree, 'newick')
+    # set_label(cfml_tree)
     alignment = dendropy.DnaCharacterMatrix.get(file=open(genomefile), schema="fasta")
     GTR_sample = GTR_model(rates, pi)
     column = get_DNA_fromAlignment(alignment)
@@ -841,7 +841,7 @@ if __name__ == "__main__":
     # print(rmse_real_CFML)
 
 
-    write_rmse(nu,rmse_real_phyloHMM, rmse_real_CFML)
+    write_rmse(nu,mixtureProb,rmse_real_phyloHMM, rmse_real_CFML)
 
     comparison_plot(realData, phyloHMMData)
 
