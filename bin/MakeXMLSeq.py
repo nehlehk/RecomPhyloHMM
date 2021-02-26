@@ -1,17 +1,8 @@
-import numpy as np
-import numpy.linalg as la
-import pandas as pd
-import matplotlib.pyplot as plt
-import hmmlearn.base
-import hmmlearn._utils
 from dendropy import Tree, DnaCharacterMatrix
 import dendropy
 import xml.etree.ElementTree as ET
-from sklearn.metrics import mean_squared_error
-import math
 import argparse
-import csv
-import operator
+
 
 
 # **********************************************************************************************************************

@@ -831,7 +831,7 @@ if __name__ == "__main__":
     phyloHMMData = predict_recombination(tipdata,mixtureProb,internalNode)
     clonalData = np.zeros((alignment_len, tips_num))
     CFMLData = CFML_recombination(cfml_path)
-    CFML_resultFig(cfml_tree, CFMLData)
+    # CFML_resultFig(cfml_tree, CFMLData)
 
     rmse_real_phyloHMM= calc_rmse(realData,phyloHMMData)
     # print(rmse_real_phyloHMM)
