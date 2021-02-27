@@ -17,33 +17,48 @@ args = parser.parse_args()
 
 # rmse_path = args.rmseFiles
 
-rmse_path = '/home/nehleh/work/results/Summary_Results/collected_rmse.csv'
+rmse_path = '/home/nehleh/work/results/Summary_Results/rmse.csv'
 
-
-# files = glob.glob(rmse_path)
-# for id,f in enumerate(files):
-#     x.append(id)
-#     csv = pd.read_csv(f, sep=';',names=None)
-#     y1.append(float(csv.iloc[:,1].name))
-#     y2.append(float(csv.iloc[:,2].name))
-#     # y3.append(float(csv.iloc[:,3].name))
 
 
 f = open(rmse_path, "r")
-df = pd.read_csv(f, sep=';')
+df = pd.read_csv(f, sep=';', names=['nu', 'prob','Phylohmm','CFML'], header=None)
 print(df)
-print(df.loc[0])
-# x.append((df.iloc[:,0]))
-# print(x)
-# y1.append(float(csv.iloc[:,1].name))
-# # print(y1)
-# y2.append(float(csv.iloc[:,2].name))
-# print(y2)
-# y3.append(float(csv.iloc[:,3].name))
+nu_value = df['nu'].unique()
+print(nu_value)
+prob_value = df['prob'].unique()
+print(prob_value)
+case_num = df['CFML'].nunique()
+print(case_num)
+
+print(df.groupby(['nu', 'prob'], as_index=False).mean())
 
 
-# rmse_summary = pd.DataFrame({'id': x, 'phyloHMM': y1 ,'CFML':y2 })
-# rmse_summary.to_csv('./rmse_summary.csv', sep='\t', header=True)
+fig = plt.figure(figsize=(10,10))
+# ax = plt.gca()
+ax1 = fig.add_subplot(2, 1, 1)
+for nu in nu_value:
+    for prob in prob_value:
+        # print("nu:",nu,"prob:",prob)
+        my_df = df.loc[(df['nu'] == nu) & (df['prob'] == prob)]
+        my_df = my_df.reset_index(drop=True)
+        my_df.plot(kind='line', y='Phylohmm', ax=ax1, marker='*', label='RMSE values when nu =' + str(nu) + ' and prob =' + str(prob))
+my_df.plot(kind='line', y='CFML',color='blue', ax=ax1, marker='*')
+
+plt.xlabel('case_number')
+plt.ylabel('RMSE-value')
+ax1.legend(loc='best')
+
+ax2 = fig.add_subplot(2, 1, 2)
+# df.groupby(['nu', 'prob'], as_index=False).mean().unstack().plot(kind='bar',stacked=True)
+df.groupby(['nu', 'prob'], as_index=False).mean().plot(kind='bar',stacked=True , y = ['Phylohmm','CFML'] , ax = ax2)
+# df.groupby(['nu', 'prob'], as_index=False).mean().plot(kind='bar',stacked=True , y = 'CFML', ax = ax2)
+ax2.legend()
+
+
+
+plt.show()
+
 
 
 

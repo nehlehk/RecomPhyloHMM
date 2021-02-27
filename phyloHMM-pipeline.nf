@@ -1,8 +1,8 @@
 nextflow.enable.dsl = 2
 
 
-params.genomeSize = '1000'
-params.recom_len = '300'
+params.genomeSize = '5000'
+params.recom_len = '500'
 params.recom_rate = '0.02'
 params.tMRCA = '0.01'
 params.nu_sim = '0.2'
@@ -15,7 +15,7 @@ frequencies = Channel.value(' 0.2184,0.2606,0.3265,0.1946' )
 rates =  Channel.value('0.975070 ,4.088451 ,0.991465 ,0.640018 ,3.840919 ,1')
 nu_hmm = Channel.of(0.01,0.02)
 mix_prob = Channel.of(0.6,0.7)
-repeat_range = Channel.value(1..3)
+repeat_range = Channel.value(1..10)
 
 
 
@@ -247,6 +247,7 @@ process CFML_result {
 process phyloHMM {
 
      publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_nu_${nu_hmm}_prob_${mix_prob}_$filename" }
+     maxForks 1
 
      input:
         path wholegenome
@@ -463,17 +464,17 @@ workflow {
     
     seq_gen(BaciSim.out.BaciSimtrees,frequencies,rates)
     
-    Gubbins(seq_gen.out.wholegenome,seq_gen.out.range)
+//    Gubbins(seq_gen.out.wholegenome,seq_gen.out.range)
 
     get_raxml_tree(seq_gen.out.wholegenome,seq_gen.out.range)
     
-    make_xml_seq(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,seq_gen.out.range)
-    
-    Beast_alignment(make_xml_seq.out.original_XML,seq_gen.out.range)
-    
-    treeannotator_alignment(Beast_alignment.out.beastSeqTree,seq_gen.out.range)
-
-    convertor_SeqTree(treeannotator_alignment.out.SeqTree,seq_gen.out.range)  
+//    make_xml_seq(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,seq_gen.out.range)
+//    
+//    Beast_alignment(make_xml_seq.out.original_XML,seq_gen.out.range)
+//    
+//    treeannotator_alignment(Beast_alignment.out.beastSeqTree,seq_gen.out.range)
+//
+//    convertor_SeqTree(treeannotator_alignment.out.SeqTree,seq_gen.out.range)  
    
     CFML(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,seq_gen.out.range)
 
@@ -481,7 +482,7 @@ workflow {
    
     phyloHMM(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,BaciSim.out.recomlog,CFML.out.CFML_recom,seq_gen.out.range,nu_hmm,mix_prob)
     
-    collectedFile = phyloHMM.out.rmse.collectFile(name:"rmse.csv",storeDir:"/home/nehleh/work/results/Summary_Results", keepHeader:false) 
+    collectedFile = phyloHMM.out.rmse.collectFile(name:"rmse.csv",storeDir:"/home/nehleh/work/results/Summary_Results", keepHeader:false , sort: false) 
       
 //    Beast_partial(phyloHMM.out.partial_XML,genome,nu_hmm,seq_gen.out.range)
 //    
