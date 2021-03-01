@@ -10,12 +10,12 @@ params.xml_file = "${PWD}/bin/GTR_template.xml"
 params.out =  "${PWD}/results" 
 
 
-genome = Channel.value(10)
+genome = Channel.value(7)
 frequencies = Channel.value(' 0.2184,0.2606,0.3265,0.1946' )
 rates =  Channel.value('0.975070 ,4.088451 ,0.991465 ,0.640018 ,3.840919 ,1')
-nu_hmm = Channel.of(0.005,0.01,0.02)
-mix_prob = Channel.of(0.6,0.7)
-repeat_range = Channel.value(1..3)
+nu_hmm = Channel.of(0.02)
+mix_prob = Channel.of(0.6)
+repeat_range = Channel.value(1)
 
 
 
@@ -90,10 +90,10 @@ process Gubbins {
         path "gubbins.final_tree.tre" , emit: gubbinstree
         
     
-        """   
-         run_gubbins  -r GTRGAMMA -p gubbins   ${wholegenome} 
+     """   
+        run_gubbins.py  -r GTRGAMMA -p gubbins   ${wholegenome} 
           
-        """
+     """
 }
 
 
@@ -122,7 +122,7 @@ process get_raxml_tree {
 process make_xml_seq {
 
     publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_$filename" }
-    conda "bioconda::dendropy=4.5.2  conda-forge::elementpath"
+    conda "numpy bioconda::dendropy"
     
 
     input:
@@ -135,7 +135,7 @@ process make_xml_seq {
 
 
      """
-       python3.8 $PWD/bin/MakeXMLSeq.py -t ${myRaxML} -a ${wholegenome}  -x ${params.xml_file}        
+       python3.8  $PWD/bin/MakeXMLSeq.py -t ${myRaxML} -a ${wholegenome}  -x ${params.xml_file}        
         
      """
 }
@@ -144,7 +144,7 @@ process Beast_alignment {
 
      publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_$filename" }
    
-     conda "bioconda::beast2"
+     conda "conda-forge::python=3.7  bioconda::beast2"
 
      input:
          path original_XML
@@ -156,7 +156,7 @@ process Beast_alignment {
          path 'wholegenome.trees' , emit:  beastSeqTree
      
      """
-       /bin/beast  ${original_XML}        
+       beast  ${original_XML}        
      """
 }
 
@@ -165,7 +165,7 @@ process treeannotator_alignment {
 
      publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_$filename" } 
      
-     conda "bioconda::beast"
+     conda "conda-forge::python=3.7  bioconda::beast2"
 
      input:
      
@@ -176,7 +176,7 @@ process treeannotator_alignment {
          path 'beastSeqTree.nexus' , emit: SeqTree
      
      """
-       /bin/treeannotator -b 10  ${beastSeqTree}  beastSeqTree.nexus      
+       treeannotator -b 10  ${beastSeqTree}  beastSeqTree.nexus      
      """
 }
 
@@ -185,7 +185,8 @@ process convertor_SeqTree {
 
      publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_$filename" }
      
-     conda "bioconda::dendropy=4.5.2"
+     conda "conda-forge::python=3.8  bioconda::dendropy"     
+
      
      input:
         path SeqTree
@@ -290,17 +291,14 @@ process RMSE_summary {
      conda "conda-forge::matplotlib=3.3.4 pandas"
 
      input: 
-         each genome
-         path rmse
-         each repeat_range
+        path collectedRMSE
 
   
      output:
-         path 'rmse_summary.csv' , emit: rmse_summary  
          path 'RMSE_comparison.jpeg' , emit: rmse_plot
     
      """
-       python3.8 $PWD/bin/rmse_summary.py -f ${rmse}
+       python3.8 $PWD/bin/rmse_summary.py -f rmse.csv
        
      """
 }
@@ -309,14 +307,16 @@ process RMSE_summary {
 
 process Beast_partial {
 
-     publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_nu_${nu_hmm}_prob_${mix_prob}_$filename" }
-     conda "bioconda::beast2"
+     publishDir "${params.out}" , mode: 'copy' , saveAs: { filename -> "num_${repeat_range}_nu_${nu_hmm}/num_${repeat_range}_nu_${nu_hmm}_$filename" }
+     
+     conda "conda-forge::python=3.7  bioconda::beast2"
+
 
 
      input:
         path partial_XML
-        val genome
-        val nu_hmm
+        each genome
+        each nu_hmm
         val repeat_range
          
          
@@ -324,7 +324,7 @@ process Beast_partial {
          path 'wholegenome.trees' , emit: beastPartialTree
      
      """
-       /beast/bin/beast  ${partial_XML}        
+       beast  ${partial_XML}        
      """
 }
 
@@ -333,8 +333,9 @@ process Beast_partial {
 
 process treeannotator_partial {
 
-     publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_nu_${nu_hmm}_prob_${mix_prob}_$filename" }
-     conda "bioconda::beast2  bioconda::beast"
+     publishDir "${params.out}" , mode: 'copy' , saveAs: { filename -> "num_${repeat_range}_nu_${nu_hmm}/num_${repeat_range}_nu_${nu_hmm}_$filename" }
+     
+     conda "conda-forge::python=3.7  bioconda::beast2"
 
      input:   
         path beastPartialTree
@@ -349,7 +350,7 @@ process treeannotator_partial {
 
      
      """
-       /beast/bin/treeannotator -b 10  ${beastPartialTree}  beastOurTree.nexus      
+       treeannotator -b 10  ${beastPartialTree}  beastOurTree.nexus      
      """
 }
 
@@ -357,8 +358,9 @@ process treeannotator_partial {
 
 process convertor_ourTree {
 
-     publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_nu_${nu_hmm}_prob_${mix_prob}_$filename" }
-     conda "bioconda::dendropy=4.5.2"
+     publishDir "${params.out}" , mode: 'copy' , saveAs: { filename -> "num_${repeat_range}_nu_${nu_hmm}/num_${repeat_range}_nu_${nu_hmm}_$filename" }
+     
+     conda "conda-forge::python=3.8 bioconda::dendropy=4.5.2"
      
      input: 
         path beastOurTree
@@ -379,7 +381,8 @@ process convertor_ourTree {
 
 process mergeTreeFiles {
 
-    publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_nu_${nu_hmm}_prob_${mix_prob}_$filename" }
+    publishDir "${params.out}" , mode: 'copy' , saveAs: { filename -> "num_${repeat_range}_nu_${nu_hmm}/num_${repeat_range}_nu_${nu_hmm}_$filename" }
+    
     maxForks 1
 
     input:
@@ -407,7 +410,8 @@ process mergeTreeFiles {
 
 process TreeCmp {
 
-     publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_nu_${nu_hmm}_prob_${mix_prob}_$filename" }
+     publishDir "${params.out}" , mode: 'copy' , saveAs: { filename -> "num_${repeat_range}_nu_${nu_hmm}/num_${repeat_range}_nu_${nu_hmm}_$filename" }
+     
      maxForks 1
 
      input:
@@ -463,17 +467,17 @@ workflow {
     
     seq_gen(BaciSim.out.BaciSimtrees,frequencies,rates)
     
-//    Gubbins(seq_gen.out.wholegenome,seq_gen.out.range)
+    Gubbins(seq_gen.out.wholegenome,seq_gen.out.range)
 
     get_raxml_tree(seq_gen.out.wholegenome,seq_gen.out.range)
     
-//    make_xml_seq(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,seq_gen.out.range)
-//    
-//    Beast_alignment(make_xml_seq.out.original_XML,seq_gen.out.range)
-//    
-//    treeannotator_alignment(Beast_alignment.out.beastSeqTree,seq_gen.out.range)
-//
-//    convertor_SeqTree(treeannotator_alignment.out.SeqTree,seq_gen.out.range)  
+    make_xml_seq(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,seq_gen.out.range)
+    
+    Beast_alignment(make_xml_seq.out.original_XML,seq_gen.out.range)
+
+    treeannotator_alignment(Beast_alignment.out.beastSeqTree,seq_gen.out.range)
+
+    convertor_SeqTree(treeannotator_alignment.out.SeqTree,seq_gen.out.range)  
    
     CFML(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,seq_gen.out.range)
 
@@ -481,7 +485,7 @@ workflow {
    
     phyloHMM(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,BaciSim.out.recomlog,CFML.out.CFML_recom,seq_gen.out.range,nu_hmm,mix_prob)
     
-    collectedRMSE = phyloHMM.out.rmse.collectFile(name:"rmse.csv",storeDir:"/home/nehleh/work/results/Summary_Results", keepHeader:false , sort: false) 
+    collectedRMSE = phyloHMM.out.rmse.collectFile(name:"rmse.csv",storeDir:"${PWD}/results/Summary_Results", keepHeader:false , sort: false) 
     
     RMSE_summary(collectedRMSE)
       
