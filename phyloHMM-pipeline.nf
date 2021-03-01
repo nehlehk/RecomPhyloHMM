@@ -1,7 +1,7 @@
 nextflow.enable.dsl = 2
 
 
-params.genomeSize = '5000'
+params.genomeSize = '10000'
 params.recom_len = '500'
 params.recom_rate = '0.02'
 params.tMRCA = '0.01'
@@ -10,12 +10,12 @@ params.xml_file = '/home/nehleh/Documents/GTR_template.xml'
 params.out = '/home/nehleh/work/results/'
 
 
-genome = Channel.value(8)
+genome = Channel.value(10)
 frequencies = Channel.value(' 0.2184,0.2606,0.3265,0.1946' )
 rates =  Channel.value('0.975070 ,4.088451 ,0.991465 ,0.640018 ,3.840919 ,1')
-nu_hmm = Channel.of(0.01,0.02)
-mix_prob = Channel.of(0.6,0.7)
-repeat_range = Channel.value(1..10)
+nu_hmm = Channel.of(0.005,0.01,0.02,0.03,0.04)
+mix_prob = Channel.of(0.5,0.6,0.7,0.8,0.9)
+repeat_range = Channel.value(1..30)
 
 
 
@@ -68,7 +68,6 @@ process seq_gen {
     
     """ 
      numTrees=\$(wc -l < BaciSimTrees.tree | awk '{ print \$1 }')
-     echo Processing ${repeat_range}
      seq-gen  -mGTR  -l${params.genomeSize} -r$r -f$f -s0.2 -of BaciSimTrees.tree -p \$numTrees > wholegenome_${repeat_range}.fasta
 
     """
@@ -160,7 +159,6 @@ process treeannotator_alignment {
      publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_$filename" }  
 
      
-
      input:
      
          path beastSeqTree 
@@ -270,13 +268,30 @@ process phyloHMM {
 
      """
        python3.8 /home/nehleh/PhyloCode/RecomPhyloHMM/bin/phyloHMM.py -t ${myRaxML} -a ${wholegenome}  -x ${params.xml_file} -l ${recomlog}  -c ${CFML_recom} -nu ${nu_hmm} -p ${mix_prob}
-       
         
      """
 }
 
 
 
+process RMSE_summary {
+
+     publishDir "/home/nehleh/work/results/Summary_Results", mode: "copy"
+     maxForks 1
+     
+
+     input: 
+        path collectedRMSE
+
+  
+     output:
+         path 'RMSE_comparison.jpeg' , emit: rmse_plot
+    
+     """
+       python3.8  /home/nehleh/PhyloCode/RecomPhyloHMM/bin/rmse_summary.py -f rmse.csv
+       
+     """
+}
 
 
 
@@ -333,8 +348,7 @@ process convertor_ourTree {
 
      
      
-     input:
-     
+     input: 
         path beastOurTree
         each genome
         each nu_hmm
@@ -402,28 +416,7 @@ process TreeCmp {
 }
 
 
-process RMSE_summary {
 
-
-     publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_nu_${nu_hmm}_prob_${mix_prob}_$filename" }
-     maxForks 1
-     
-
-     input: 
-         each genome
-         path rmse
-         val repeat_range
-
-  
-     output:
-         path 'rmse_summary.csv' , emit: rmse_summary  
-         path 'RMSE_comparison.jpeg' , emit: rmse_plot
-    
-     """
-       python3.8 /home/nehleh/PhyloCode/RecomPhyloHMM/bin/rmse_summary.py -f ${rmse}
-       
-     """
-}
 
 
 
@@ -439,7 +432,6 @@ process phyloHMM_beast {
         path CFML_recom
         path CFMLtree
         each nu_hmm
-//        each mix_prob
         val repeat_range
 
 //     output:
@@ -482,7 +474,9 @@ workflow {
    
     phyloHMM(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,BaciSim.out.recomlog,CFML.out.CFML_recom,seq_gen.out.range,nu_hmm,mix_prob)
     
-    collectedFile = phyloHMM.out.rmse.collectFile(name:"rmse.csv",storeDir:"/home/nehleh/work/results/Summary_Results", keepHeader:false , sort: false) 
+    collectedRMSE = phyloHMM.out.rmse.collectFile(name:"rmse.csv",storeDir:"/home/nehleh/work/results/Summary_Results", keepHeader:false , sort: false) 
+    
+    RMSE_summary(collectedRMSE)
       
 //    Beast_partial(phyloHMM.out.partial_XML,genome,nu_hmm,seq_gen.out.range)
 //    
@@ -496,6 +490,6 @@ workflow {
 //    
 //    phyloHMM_beast(seq_gen.out.wholegenome,convertor_ourTree.out.beastHMMTree,BaciSim.out.recomlog,CFML.out.CFML_recom,CFML.out.CFMLtree,nu_hmm,seq_gen.out.range)
 
-//    RMSE_summary(BaciSim.out.n_genome,phyloHMM.out.rmse,BaciSim.out.n_repeat)
+    
        
 }
