@@ -656,7 +656,9 @@ def CFML_recombination(CFML_recomLog):
         node = df['Node'][i]
         if "NODE_" in str(node):
             node = node[5:]
-        CFMLData[s:e,int(node)] = 1
+        mynode = int(give_taxon_index(tree, node))
+        CFMLData[s:e, mynode] = 1
+        # CFMLData[s:e,int(node)] = 1
 
     return CFMLData
 # **********************************************************************************************************************
@@ -833,11 +835,11 @@ if __name__ == "__main__":
     CFMLData = CFML_recombination(cfml_path)
     # CFML_resultFig(cfml_tree, CFMLData)
 
-    rmse_real_phyloHMM= calc_rmse(realData,phyloHMMData)
+    rmse_real_phyloHMM= mean_squared_error(realData,phyloHMMData,squared=False)
     # print(rmse_real_phyloHMM)
-    rmse_clonal_phyloHMM = calc_rmse(clonalData, phyloHMMData)
-    rmse_clonal_real = calc_rmse(clonalData, realData)
-    rmse_real_CFML = calc_rmse(realData,CFMLData)
+    rmse_clonal_phyloHMM = mean_squared_error(clonalData, phyloHMMData, squared=False)
+    rmse_clonal_real = mean_squared_error(clonalData, realData, squared=False)
+    rmse_real_CFML = mean_squared_error(realData,CFMLData, squared=False)
     # print(rmse_real_CFML)
 
 
