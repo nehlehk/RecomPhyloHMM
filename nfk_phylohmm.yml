@@ -1,0 +1,22 @@
+
+name: nfk_phylohmm
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - numpy
+  - dendropy=4.5.2
+  - matplotlib=3.3.4
+  - pandas
+  - seq-gen
+  - gubbins=2.4.1
+  - raxml=8.2.12
+  - dendropy
+  #- python=3.7.3
+  - beast2
+  - python=3.8.5
+  - clonalframeml=1.12
+  - scikit-learn
+  - hmmlearn
+
