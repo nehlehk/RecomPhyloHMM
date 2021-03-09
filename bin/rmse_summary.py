@@ -2,44 +2,52 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import argparse
 import seaborn as sns
-from pycallgraph import PyCallGraph
-from pycallgraph.output import GraphvizOutput
+# from pycallgraph import PyCallGraph
+# from pycallgraph.output import GraphvizOutput
 
-# parser = argparse.ArgumentParser(description='''You did not specify any parameters.''')
-# parser.add_argument('-f', "--rmseFiles", type=str, help='rmseFiles')
-# args = parser.parse_args()
-#
-#
-# rmse_path = args.rmseFiles
+parser = argparse.ArgumentParser(description='''You did not specify any parameters.''')
+parser.add_argument('-f', "--rmseFiles", type=str, help='rmseFiles')
+args = parser.parse_args()
+
+
+rmse_path = args.rmseFiles
 
 # with PyCallGraph(output=GraphvizOutput()):
-rmse_path = '/home/nehleh/Desktop/rmse30.csv'
+# rmse_path = '/home/nehleh/Desktop/rmse30.csv'
 
 
 
 f = open(rmse_path, "r")
 df = pd.read_csv(f, sep=';', names=['nu', 'prob','Phylohmm','CFML'], header=None)
+print(df)
 # nu_value = df['nu'].unique()
 # prob_value = df['prob'].unique()
 # case_num = df['CFML'].nunique()
 
 
 # print(pd.melt(df))
-new_df = pd.melt(df, id_vars=['nu','prob'], value_vars=['Phylohmm','CFML'])
-print(new_df)
-# new_df.boxplot( column='value' , by=['nu'] ,grid=True, rot=45, fontsize=10)
-ax = sns.boxplot(data=new_df, x='variable', y='value', hue='nu')
+# new_df = pd.melt(df, id_vars=['nu','prob'], value_vars=['Phylohmm','CFML'])
+# # print(new_df)
+# # new_df.boxplot( column='value' , by=['nu'] ,grid=True, rot=45, fontsize=10)
+# ax = sns.boxplot(data=new_df, x='variable', y='value', hue='nu')
 
 # sns.boxplot(x="variable", y="value", data=pd.melt(df))
-# fig = plt.figure(figsize=(8,8))
-# ax1 = fig.add_subplot(2, 1, 1)
-# ax1 = sns.boxplot(x = 'nu', y="Phylohmm" ,data=df , hue = 'prob' )
-# # ax1 = sns.stripplot(x = 'nu', y="Phylohmm",data=df, hue='prob' , jitter=True, dodge=True, marker='o', color=".5")
-# handles, labels = ax1.get_legend_handles_labels()
-# # specify just one legend
+
+
+
+fig = plt.figure(figsize=(8,8))
+ax1 = fig.add_subplot(2, 1, 1)
+ax1 = sns.boxplot(x = 'nu', y="Phylohmm" ,data=df , hue = 'prob' )
+ax1 = sns.stripplot(x = 'nu', y="Phylohmm",data=df, hue='prob' , jitter=True, dodge=True, marker='o', color=".5")
+handles, labels = ax1.get_legend_handles_labels()
+l = plt.legend(handles[0:5], labels[0:5] , title= 'Probablity')
+
+
+ax2 = fig.add_subplot(2, 1, 2)
+ax2 = sns.boxplot(x = 'nu',y=df["CFML"] ,data=df  )
+# ax2 = sns.stripplot(x = 'nu', y="CFML",data=df , jitter=True, dodge=True, marker='o', color=".5")
+# handles, labels = ax2.get_legend_handles_labels()
 # l = plt.legend(handles[0:5], labels[0:5] , title= 'Probablity')
-# ax2 = fig.add_subplot(2, 1, 2)
-# ax2 = sns.boxplot(y=df["CFML"] ,data=df)
 
 
 
@@ -97,5 +105,5 @@ ax = sns.boxplot(data=new_df, x='variable', y='value', hue='nu')
 # ax2.grid(True, 'major', 'y', ls='--', lw=.5, c='k', alpha=.3)
 # ax2.legend()
 
-plt.show()
-# plt.savefig("RMSE_comparison.jpeg")
+# plt.show()
+plt.savefig("RMSE_comparison.jpeg")
