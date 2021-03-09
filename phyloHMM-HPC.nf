@@ -1,8 +1,8 @@
 nextflow.enable.dsl = 2
 
 
-params.genomeSize = '1000'
-params.recom_len = '200'
+params.genomeSize = '10000'
+params.recom_len = '500'
 params.recom_rate = '0.05'
 params.tMRCA = '0.01'
 params.nu_sim = '0.2'
@@ -10,12 +10,12 @@ params.xml_file = "${PWD}/bin/GTR_template.xml"
 params.out =  "${PWD}/results" 
 
 
-genome = Channel.value(7)
+genome = Channel.value(10)
 frequencies = Channel.value(' 0.2184,0.2606,0.3265,0.1946' )
 rates =  Channel.value('0.975070 ,4.088451 ,0.991465 ,0.640018 ,3.840919 ,1')
-nu_hmm = Channel.of(0.02)
-mix_prob = Channel.of(0.6)
-repeat_range = Channel.value(1)
+nu_hmm = Channel.of(0.005,0.01,0.02,0.03,0.04)
+mix_prob = Channel.of(0.5,0.6,0.7,0.8,0.9)
+repeat_range = Channel.value(1..4)
 
 
 
@@ -24,15 +24,12 @@ repeat_range = Channel.value(1)
 process BaciSim {
 
      publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_$filename" }
-//     maxForks 1
-//     errorStrategy 'retry'
-//     maxRetries 3
-//     
-//     conda "numpy bioconda::dendropy=4.5.2 conda-forge::matplotlib=3.3.4 pandas"
+     maxForks 1
+     errorStrategy 'retry'
+     maxRetries 3
+     label 'short'  
+     conda "numpy bioconda::dendropy=4.5.2 conda-forge::matplotlib=3.3.4 pandas"
 
-     conda '/shared/homes/13298409/miniconda3/envs/nfk_phylohmm'
-     
-     executor = 'pbs'
      
     
      input:
@@ -57,9 +54,10 @@ process BaciSim {
 process seq_gen {
 
     publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_$filename" }
-    maxForks 1   
-
-
+    maxForks 1 
+    errorStrategy 'retry'
+    maxRetries 3
+    label 'short'  
     conda "bioconda::seq-gen"
 
     input:
@@ -83,8 +81,10 @@ process seq_gen {
 process Gubbins {
 
     publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_$filename" }
-
     conda  "bioconda::gubbins=2.4.1"
+    errorStrategy 'retry'
+    maxRetries 3
+    label 'short'
 
 
      input:
@@ -107,8 +107,10 @@ process get_raxml_tree {
 
     publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_$filename" }
     maxForks 1
-
     conda "bioconda::raxml=8.2.12"
+    errorStrategy 'retry'
+    maxRetries 3
+    label 'short'
 
     input:
         path wholegenome
@@ -129,6 +131,9 @@ process make_xml_seq {
 
     publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_$filename" }
     conda "numpy bioconda::dendropy"
+    errorStrategy 'retry'
+    maxRetries 3
+    label 'short'
     
 
     input:
@@ -149,8 +154,10 @@ process make_xml_seq {
 process Beast_alignment {
 
      publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_$filename" }
-   
      conda "conda-forge::python=3.7  bioconda::beast2"
+     errorStrategy 'retry'
+     maxRetries 3
+     label 'short'
 
      input:
          path original_XML
@@ -170,8 +177,10 @@ process Beast_alignment {
 process treeannotator_alignment {
 
      publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_$filename" } 
-     
      conda "conda-forge::python=3.7  bioconda::beast2"
+     errorStrategy 'retry'
+     maxRetries 3
+     label 'short'
 
      input:
      
@@ -190,8 +199,10 @@ process treeannotator_alignment {
 process convertor_SeqTree {
 
      publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_$filename" }
-     
-     conda "conda-forge::python=3.8  bioconda::dendropy"     
+     conda "conda-forge::python=3.8  bioconda::dendropy" 
+     errorStrategy 'retry'
+     maxRetries 3  
+     label 'short'  
 
      
      input:
@@ -212,6 +223,9 @@ process CFML {
 
    publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_$filename" }
    conda "bioconda::clonalframeml=1.12"
+   errorStrategy 'retry'
+   maxRetries 3
+   label 'short'
     
     input:
         path wholegenome
@@ -235,6 +249,9 @@ process CFML_result {
 
      publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_$filename" }
      conda "numpy bioconda::dendropy=4.5.2 conda-forge::matplotlib=3.3.4 pandas"
+     errorStrategy 'retry'
+     maxRetries 3
+     label 'short'
 
      input:
         path wholegenome
@@ -260,9 +277,13 @@ process CFML_result {
 
 process phyloHMM {
 
-     publishDir "${params.out}" , mode: 'copy' , saveAs: { filename -> "num_${repeat_range}_nu_${nu_hmm}/num_${repeat_range}_nu_${nu_hmm}_$filename" }
-     
+     publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_nu_${nu_hmm}_prob_${mix_prob}_$filename" }
      conda "numpy bioconda::dendropy=4.5.2 conda-forge::matplotlib=3.3.4 pandas scikit-learn conda-forge::hmmlearn"
+     errorStrategy 'retry'
+     maxRetries 3
+     label 'short'
+     
+     maxForks 1
 
      input:
         path wholegenome
@@ -293,8 +314,10 @@ process RMSE_summary {
 
      publishDir "$PWD/results/Summary_Results", mode: "copy"
      maxForks 1
-     
-     conda "conda-forge::matplotlib=3.3.4 pandas"
+     conda "conda-forge::matplotlib=3.3.4 pandas conda-forge::seaborn"
+     errorStrategy 'retry'
+     maxRetries 3
+     label 'short'
 
      input: 
         path collectedRMSE
@@ -313,9 +336,11 @@ process RMSE_summary {
 
 process Beast_partial {
 
-     publishDir "${params.out}" , mode: 'copy' , saveAs: { filename -> "num_${repeat_range}_nu_${nu_hmm}/num_${repeat_range}_nu_${nu_hmm}_$filename" }
-     
+     publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_nu_${nu_hmm}_prob_${mix_prob}_$filename" }  
      conda "conda-forge::python=3.7  bioconda::beast2"
+     errorStrategy 'retry'
+     maxRetries 3
+     label 'medium'
 
 
 
@@ -339,9 +364,11 @@ process Beast_partial {
 
 process treeannotator_partial {
 
-     publishDir "${params.out}" , mode: 'copy' , saveAs: { filename -> "num_${repeat_range}_nu_${nu_hmm}/num_${repeat_range}_nu_${nu_hmm}_$filename" }
-     
+     publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_nu_${nu_hmm}_prob_${mix_prob}_$filename" }
      conda "conda-forge::python=3.7  bioconda::beast2"
+     errorStrategy 'retry'
+     maxRetries 3
+     label 'short'
 
      input:   
         path beastPartialTree
@@ -364,9 +391,11 @@ process treeannotator_partial {
 
 process convertor_ourTree {
 
-     publishDir "${params.out}" , mode: 'copy' , saveAs: { filename -> "num_${repeat_range}_nu_${nu_hmm}/num_${repeat_range}_nu_${nu_hmm}_$filename" }
-     
+     publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_nu_${nu_hmm}_prob_${mix_prob}_$filename" }
      conda "conda-forge::python=3.8 bioconda::dendropy=4.5.2"
+     errorStrategy 'retry'
+     maxRetries 3
+     label 'short'
      
      input: 
         path beastOurTree
@@ -387,9 +416,11 @@ process convertor_ourTree {
 
 process mergeTreeFiles {
 
-    publishDir "${params.out}" , mode: 'copy' , saveAs: { filename -> "num_${repeat_range}_nu_${nu_hmm}/num_${repeat_range}_nu_${nu_hmm}_$filename" }
-    
+    publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_nu_${nu_hmm}_prob_${mix_prob}_$filename" } 
     maxForks 1
+    errorStrategy 'retry'
+    maxRetries 3
+    label 'short'
 
     input:
          path beastHMMTree
@@ -416,9 +447,11 @@ process mergeTreeFiles {
 
 process TreeCmp {
 
-     publishDir "${params.out}" , mode: 'copy' , saveAs: { filename -> "num_${repeat_range}_nu_${nu_hmm}/num_${repeat_range}_nu_${nu_hmm}_$filename" }
-     
+     publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_nu_${nu_hmm}_prob_${mix_prob}_$filename" }     
      maxForks 1
+     errorStrategy 'retry'
+     maxRetries 3
+     label 'short'
 
      input:
      
@@ -441,9 +474,11 @@ process TreeCmp {
 process phyloHMM_beast {
 
      publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_nu_${nu_hmm}_prob_${mix_prob}_$filename" }
-     maxForks 1
-     
+     maxForks 1  
      conda "numpy bioconda::dendropy=4.5.2 conda-forge::matplotlib=3.3.4 pandas scikit-learn conda-forge::hmmlearn"
+     errorStrategy 'retry'
+     maxRetries 3
+     label 'short'
 
      input:
         path wholegenome
@@ -471,29 +506,29 @@ workflow {
 
     BaciSim(genome,repeat_range)
     
-//    seq_gen(BaciSim.out.BaciSimtrees,frequencies,rates)
-//    
-//    Gubbins(seq_gen.out.wholegenome,seq_gen.out.range)
-//
-//    get_raxml_tree(seq_gen.out.wholegenome,seq_gen.out.range)
-//    
-//    make_xml_seq(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,seq_gen.out.range)
-//    
-//    Beast_alignment(make_xml_seq.out.original_XML,seq_gen.out.range)
-//
-//    treeannotator_alignment(Beast_alignment.out.beastSeqTree,seq_gen.out.range)
-//
-//    convertor_SeqTree(treeannotator_alignment.out.SeqTree,seq_gen.out.range)  
-//   
-//    CFML(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,seq_gen.out.range)
-//
-//    CFML_result(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,CFML.out.CFML_recom,CFML.out.CFMLtree,seq_gen.out.range)
-//   
-//    phyloHMM(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,BaciSim.out.recomlog,CFML.out.CFML_recom,seq_gen.out.range,nu_hmm,mix_prob)
-//    
-//    collectedRMSE = phyloHMM.out.rmse.collectFile(name:"rmse.csv",storeDir:"${PWD}/results/Summary_Results", keepHeader:false , sort: false) 
-//    
-//    RMSE_summary(collectedRMSE)
+    seq_gen(BaciSim.out.BaciSimtrees,frequencies,rates)
+    
+    Gubbins(seq_gen.out.wholegenome,seq_gen.out.range)
+
+    get_raxml_tree(seq_gen.out.wholegenome,seq_gen.out.range)
+    
+    make_xml_seq(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,seq_gen.out.range)
+    
+    Beast_alignment(make_xml_seq.out.original_XML,seq_gen.out.range)
+
+    treeannotator_alignment(Beast_alignment.out.beastSeqTree,seq_gen.out.range)
+
+    convertor_SeqTree(treeannotator_alignment.out.SeqTree,seq_gen.out.range)  
+   
+    CFML(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,seq_gen.out.range)
+
+    CFML_result(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,CFML.out.CFML_recom,CFML.out.CFMLtree,seq_gen.out.range)
+   
+    phyloHMM(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,BaciSim.out.recomlog,CFML.out.CFML_recom,seq_gen.out.range,nu_hmm,mix_prob)
+    
+    collectedRMSE = phyloHMM.out.rmse.collectFile(name:"rmse.csv",storeDir:"${PWD}/results/Summary_Results", keepHeader:false , sort: false) 
+    
+    RMSE_summary(collectedRMSE)
       
 //    Beast_partial(phyloHMM.out.partial_XML,genome,nu_hmm,seq_gen.out.range)
 //    
