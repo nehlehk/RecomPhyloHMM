@@ -836,9 +836,6 @@ if __name__ == "__main__":
     # CFML_resultFig(cfml_tree, CFMLData)
 
     rmse_real_phyloHMM= mean_squared_error(realData,phyloHMMData,squared=False)
-    # print(rmse_real_phyloHMM)
-    rmse_clonal_phyloHMM = mean_squared_error(clonalData, phyloHMMData, squared=False)
-    rmse_clonal_real = mean_squared_error(clonalData, realData, squared=False)
     rmse_real_CFML = mean_squared_error(realData,CFMLData, squared=False)
     # print(rmse_real_CFML)
 
