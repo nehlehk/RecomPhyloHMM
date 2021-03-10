@@ -639,12 +639,15 @@ def comparison_plot(RealData,predictionData):
         ax.legend(loc='best')
         plt.savefig("taxa" + str(i) + ".jpeg")
 # **********************************************************************************************************************
-def write_rmse(nu,mixtureProb,rmse_real_phylohmm,rmse_real_CFML):
-    with open('rmse.csv', mode='w') as rmse_file:
+def write_rmse_phylohmm(nu,mixtureProb,rmse_real_phylohmm):
+    with open('rmse_phylohmm.csv', mode='w') as rmse_file:
         rmse_writer = csv.writer(rmse_file, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-
-        # rmse_writer.writerow(['nu_hmm','rmse_real_predict','rmse_clonal_predict','rmse_clonal_real'])
-        rmse_writer.writerow([nu,mixtureProb,rmse_real_phylohmm,rmse_real_CFML])
+        rmse_writer.writerow([nu,mixtureProb,rmse_real_phylohmm])
+# **********************************************************************************************************************
+def write_rmse_CFML(rmse_real_CFML):
+    with open('rmse_CFML.csv', mode='w') as rmse_file:
+        rmse_writer = csv.writer(rmse_file, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        rmse_writer.writerow([rmse_real_CFML])
 # **********************************************************************************************************************
 def CFML_recombination(CFML_recomLog):
     CFMLData = np.zeros((alignment_len, nodes_number))
@@ -815,8 +818,8 @@ if __name__ == "__main__":
 
     result, dataIndex = internal_recom(internalNode, tips_num)
 
-    print(result)
-    print(dataIndex)
+    # print(result)
+    # print(dataIndex)
 
     internal_plot(posterior, hiddenStates, score)
 
@@ -836,13 +839,14 @@ if __name__ == "__main__":
     # CFML_resultFig(cfml_tree, CFMLData)
 
     rmse_real_phyloHMM= mean_squared_error(realData,phyloHMMData,squared=False)
-    rmse_real_CFML = mean_squared_error(realData,CFMLData, squared=False)
+    # rmse_real_CFML = mean_squared_error(realData,CFMLData, squared=False)
     # print(rmse_real_CFML)
 
+    write_rmse_phylohmm(nu,mixtureProb,rmse_real_phyloHMM)
 
-    write_rmse(nu,mixtureProb,rmse_real_phyloHMM, rmse_real_CFML)
+    # write_rmse_CFML(rmse_real_CFML)
 
-    comparison_plot(realData, phyloHMMData)
+    # comparison_plot(realData, phyloHMMData)
 
 
 
