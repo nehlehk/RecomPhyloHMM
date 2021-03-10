@@ -1,9 +1,9 @@
 nextflow.enable.dsl = 2
 
 
-params.genomeSize = '10000'
+params.genomeSize = '5000'
 params.recom_len = '500'
-params.recom_rate = '0.05'
+params.recom_rate = '0.01'
 params.tMRCA = '0.01'
 params.nu_sim = '0.2'
 params.xml_file = "${PWD}/bin/GTR_template.xml"
@@ -13,9 +13,9 @@ params.out =  "${PWD}/results"
 genome = Channel.value(10)
 frequencies = Channel.value(' 0.2184,0.2606,0.3265,0.1946' )
 rates =  Channel.value('0.975070 ,4.088451 ,0.991465 ,0.640018 ,3.840919 ,1')
-nu_hmm = Channel.of(0.005,0.01,0.02,0.03,0.04)
-mix_prob = Channel.of(0.5,0.6,0.7,0.8,0.9)
-repeat_range = Channel.value(1..4)
+nu_hmm = Channel.of(0.005,0.01,0.02,0.03)
+mix_prob = Channel.of(0.7,0.8,0.9)
+repeat_range = Channel.value(1..10)
 
 
 
@@ -258,16 +258,16 @@ process CFML_result {
         path myRaxML 
         path CFML_recom
         path CFMLtree
-        val repeat_range
-
+        tuple val(repeat_range), path('recomlog') 
 
 
      output:
         path 'CFML_Recombination.jpeg' , emit: CFMLFig
+        path 'rmse_CFML.csv' , emit : rmse_CFML 
 
 
      """
-       python3.8 $PWD/bin/CMFL_result.py -t ${myRaxML} -a ${wholegenome} -ct ${CFMLtree} -c ${CFML_recom} 
+       python3.8 $PWD/bin/CMFL_result.py -t ${myRaxML} -a ${wholegenome} -ct ${CFMLtree} -c ${CFML_recom}  -l ${recomlog}
        
         
      """
@@ -281,9 +281,7 @@ process phyloHMM {
      conda "numpy bioconda::dendropy=4.5.2 conda-forge::matplotlib=3.3.4 pandas scikit-learn conda-forge::hmmlearn"
      errorStrategy 'retry'
      maxRetries 3
-     label 'short'
-     
-     maxForks 1
+     label 'short'    
 
      input:
         path wholegenome
@@ -297,7 +295,7 @@ process phyloHMM {
 
      output:
         path 'RecomPartial.xml' , emit: partial_XML 
-        path 'rmse.csv' , emit : rmse 
+        path 'rmse_phylohmm.csv' , emit : rmse_phylohmm 
         path 'PhyloHMM_Recombination.jpeg' , emit: phyloHMMFig
         path 'Recom_phyloHMM_Log.txt' , emit: phyloHMMLog
         val nu_hmm , emit: my_nu
@@ -526,9 +524,11 @@ workflow {
    
     phyloHMM(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,BaciSim.out.recomlog,CFML.out.CFML_recom,seq_gen.out.range,nu_hmm,mix_prob)
     
-    collectedRMSE = phyloHMM.out.rmse.collectFile(name:"rmse.csv",storeDir:"${PWD}/results/Summary_Results", keepHeader:false , sort: false) 
+    collectedRMSE_HMM = phyloHMM.out.rmse_phylohmm.collectFile(name:"rmse_phylohmm.csv",storeDir:"${PWD}/results/Summary_Results", keepHeader:false , sort: false) 
     
-    RMSE_summary(collectedRMSE)
+    collectedRMSE_CFML = CFML_result.out.rmse_CFML.collectFile(name:"rmse_CFML.csv",storeDir:"${PWD}/results/Summary_Results", keepHeader:false , sort: false) 
+    
+//    RMSE_summary(collectedRMSE_HMM,collectedRMSE_CFML)
       
 //    Beast_partial(phyloHMM.out.partial_XML,genome,nu_hmm,seq_gen.out.range)
 //    
