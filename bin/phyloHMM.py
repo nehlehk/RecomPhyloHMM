@@ -764,7 +764,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='''You did not specify any parameters.''')
     parser.add_argument('-t', "--treeFile", type=str, required= True, help='tree')
     parser.add_argument('-a', "--alignmentFile", type=str, required= True , help='fasta file')
-    parser.add_argument('-l', "--recomlogFile", type=str, required=True, help='recombination log file')
+    parser.add_argument('-l', "--recomlogFile", type=str, help='recombination log file')
     parser.add_argument('-nu', "--nuHmm", type=float,default=0.03,help='nuHmm')
     parser.add_argument('-p', "--mixtureProb", type=float, default=0.5, help='mixtureProb')
     parser.add_argument('-f', "--frequencies", type=list, default= [0.2184,0.2606,0.3265,0.1946],help='frequencies')
@@ -773,6 +773,7 @@ if __name__ == "__main__":
     parser.add_argument('-m', "--transmat", type=list, default= [[0.997, 0.001, 0.001, 0.001],[0.001, 0.997, 0.001, 0.001],[0.001, 0.001, 0.997, 0.001],[0.001, 0.001, 0.001, 0.997]], help='rates')
     parser.add_argument('-x', "--xmlFile", type=str, help='xmlFile')
     parser.add_argument('-c', "--cfmlFile", type=str, help='cfmlFile')
+    parser.add_argument('-st', "--status", type=int, default=1, help='1 for simulated data, 0 is for real dataset')
     # parser.add_argument('-ct', "--cfmltreefile", type=str, help='cfmltreefile')
     args = parser.parse_args()
 
@@ -788,6 +789,7 @@ if __name__ == "__main__":
     cfml_path = args.cfmlFile
     # cfml_tree = args.cfmltreefile
     mixtureProb = args.mixtureProb
+    status = args.status
     # cfml_path = '/home/nehleh/CFML.importation_status.txt'
 
 
@@ -831,22 +833,20 @@ if __name__ == "__main__":
     make_beast_xml_partial(tipdata,tree,xml_path)
     # make_beast_xml_original(tree,xml_path)
 
+    if status:
+        realData = real_recombination(recomLog)
+        phyloHMMData = predict_recombination(tipdata,mixtureProb,internalNode)
+        clonalData = np.zeros((alignment_len, tips_num))
+        CFMLData = CFML_recombination(cfml_path)
+        # CFML_resultFig(cfml_tree, CFMLData)
 
-    realData = real_recombination(recomLog)
-    phyloHMMData = predict_recombination(tipdata,mixtureProb,internalNode)
-    clonalData = np.zeros((alignment_len, tips_num))
-    CFMLData = CFML_recombination(cfml_path)
-    # CFML_resultFig(cfml_tree, CFMLData)
+        rmse_real_phyloHMM= mean_squared_error(realData,phyloHMMData,squared=False)
+        # rmse_real_CFML = mean_squared_error(realData,CFMLData, squared=False)
+        # print(rmse_real_CFML)
 
-    rmse_real_phyloHMM= mean_squared_error(realData,phyloHMMData,squared=False)
-    # rmse_real_CFML = mean_squared_error(realData,CFMLData, squared=False)
-    # print(rmse_real_CFML)
-
-    write_rmse_phylohmm(nu,mixtureProb,rmse_real_phyloHMM)
-
-    # write_rmse_CFML(rmse_real_CFML)
-
-    # comparison_plot(realData, phyloHMMData)
+        write_rmse_phylohmm(nu,mixtureProb,rmse_real_phyloHMM)
+        # write_rmse_CFML(rmse_real_CFML)
+        # comparison_plot(realData, phyloHMMData)
 
 
 
