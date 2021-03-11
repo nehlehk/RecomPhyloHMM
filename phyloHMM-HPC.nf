@@ -1,9 +1,9 @@
 nextflow.enable.dsl = 2
 
 
-params.genomeSize = '5000'
+params.genomeSize = '100000'
 params.recom_len = '500'
-params.recom_rate = '0.01'
+params.recom_rate = '0.005'
 params.tMRCA = '0.01'
 params.nu_sim = '0.2'
 params.xml_file = "${PWD}/bin/GTR_template.xml"
@@ -13,7 +13,7 @@ params.out =  "${PWD}/results"
 genome = Channel.value(10)
 frequencies = Channel.value(' 0.2184,0.2606,0.3265,0.1946' )
 rates =  Channel.value('0.975070 ,4.088451 ,0.991465 ,0.640018 ,3.840919 ,1')
-nu_hmm = Channel.of(0.005,0.01,0.02,0.03)
+nu_hmm = Channel.of(0.01,0.02,0.03)
 mix_prob = Channel.of(0.7,0.8,0.9)
 repeat_range = Channel.value(1..10)
 
@@ -248,7 +248,7 @@ process CFML {
 process CFML_result {
 
      publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_$filename" }
-     conda "numpy bioconda::dendropy=4.5.2 conda-forge::matplotlib=3.3.4 pandas"
+     conda "numpy bioconda::dendropy=4.5.2 conda-forge::matplotlib=3.3.4 pandas scikit-learn"
      errorStrategy 'retry'
      maxRetries 3
      label 'short'
@@ -318,14 +318,15 @@ process RMSE_summary {
      label 'short'
 
      input: 
-        path collectedRMSE
+        path collectedRMSE_HMM
+        path collectedRMSE_CFML
 
   
      output:
          path 'RMSE_comparison.jpeg' , emit: rmse_plot
     
      """
-       python3.8 $PWD/bin/rmse_summary.py -f rmse.csv
+       python3.8 $PWD/bin/rmse_summary.py -p rmse_phylohmm.csv -c rmse_CFML.csv
        
      """
 }
@@ -520,7 +521,7 @@ workflow {
    
     CFML(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,seq_gen.out.range)
 
-    CFML_result(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,CFML.out.CFML_recom,CFML.out.CFMLtree,seq_gen.out.range)
+    CFML_result(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,CFML.out.CFML_recom,CFML.out.CFMLtree,BaciSim.out.recomlog)
    
     phyloHMM(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,BaciSim.out.recomlog,CFML.out.CFML_recom,seq_gen.out.range,nu_hmm,mix_prob)
     
@@ -528,7 +529,7 @@ workflow {
     
     collectedRMSE_CFML = CFML_result.out.rmse_CFML.collectFile(name:"rmse_CFML.csv",storeDir:"${PWD}/results/Summary_Results", keepHeader:false , sort: false) 
     
-//    RMSE_summary(collectedRMSE_HMM,collectedRMSE_CFML)
+    RMSE_summary(collectedRMSE_HMM,collectedRMSE_CFML)
       
 //    Beast_partial(phyloHMM.out.partial_XML,genome,nu_hmm,seq_gen.out.range)
 //    

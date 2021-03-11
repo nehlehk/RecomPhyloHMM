@@ -107,6 +107,26 @@ def write_rmse_CFML(rmse_real_CFML):
         rmse_writer = csv.writer(rmse_file, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         rmse_writer.writerow([rmse_real_CFML])
 # **********************************************************************************************************************
+def set_index(tree, dna):
+    sequence_count = len(dna)
+
+    for node in tree.postorder_node_iter():
+        node.index = -1
+        node.annotations.add_bound_attribute("index")
+
+    s = sequence_count
+    for node in tree.postorder_node_iter():
+        if not node.is_leaf():
+            node.index = s
+            node.label = str(node.index)
+            s += 1
+        else:
+            for idx, name in enumerate(dna):
+                if str(name) == str(node.taxon):
+                    node.index = idx
+                    node.label = str(node.index)
+                    break
+# **********************************************************************************************************************
 
 
 if __name__ == "__main__":
@@ -132,6 +152,7 @@ if __name__ == "__main__":
     nodes_number = len(tree.nodes())
     tips_num = len(alignment)
     alignment_len = alignment.sequence_size
+    set_index(tree, alignment)
 
     CFMLData = CFML_recombination(cfml_path)
     realData = real_recombination(recomLog)
