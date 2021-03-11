@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import csv
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 
 
@@ -70,63 +71,67 @@ final = pd.DataFrame({'Quartet_hmm': Quartet_hmm, 'PathDiffernce_hmm': PathDiffe
                       'Quartet_b': Quartet_b, 'PathDiffernce_b': PathDiffernce_b ,'RF_b':RF_b, 'MatchingSplit_b':MatchingSplit_b, 'UMAST_b':UMAST_b, 'RFWeighted_b':RFWeighted_b , 'GeoUnrooted_b':GeoUnrooted_b})
 
 
-# print(final)
+print(final)
 
 
 
 
 fig = plt.figure(figsize=(16,8))
 
-ax = fig.add_subplot(2, 4, 1)
-ax.set_title("Quartet")
-ax.plot(x,Quartet_hmm ,label= "phyloHMM")
-ax.plot(x,Quartet_b,label= "Beast")
-ax.plot(x,Quartet_rax,label= "RaXML")
-ax.legend(loc = 'best')
-
-ax = fig.add_subplot(2, 4, 2)
-ax.set_title("PathDiffernce")
-ax.plot(x,PathDiffernce_hmm, marker='.' ,label= "phyloHMM")
-ax.plot(x,PathDiffernce_b, marker='.' ,label= "Beast")
-ax.plot(x,PathDiffernce_rax, marker='.' ,label= "RaXML")
-ax.legend(loc = 'best')
-
-ax = fig.add_subplot(2, 4, 3)
-ax.set_title("RF")
-ax.plot(x,RF_hmm, marker='.' ,label= "phyloHMM")
-ax.plot(x,RF_b, marker='.' ,label= "Beast")
-ax.plot(x,RF_rax, marker='.' ,label= "RaXML")
-ax.legend(loc = 'best')
-
-ax = fig.add_subplot(2, 4, 4)
-ax.set_title("MatchingSplit")
-ax.plot(x,MatchingSplit_hmm, marker='.' ,label= "phyloHMM")
-ax.plot(x,MatchingSplit_b, marker='.' ,label= "Beast")
-ax.plot(x,MatchingSplit_rax, marker='.' ,label= "RaXML")
-ax.legend(loc = 'best')
+# ax1 = sns.boxplot( data=final ,hue = 'prob'  )
+# ax1 = sns.stripplot(data=final,  jitter=True, dodge=True, marker='o', color=".1")
 
 
-ax = fig.add_subplot(2, 4, 5)
-ax.set_title("UMAST")
-ax.plot(x,UMAST_hmm, marker='.' ,label= "phyloHMM")
-ax.plot(x,UMAST_b, marker='.' ,label= "Beast")
-ax.plot(x,UMAST_rax, marker='.' ,label= "RaXML")
-ax.legend(loc = 'best')
-
-ax = fig.add_subplot(2, 4, 6)
-ax.set_title("RFWeighted")
-ax.plot(x,RFWeighted_hmm, marker='.' ,label= "phyloHMM")
-ax.plot(x,RFWeighted_b, marker='.' ,label= "Beast")
-ax.plot(x,RFWeighted_rax, marker='.' ,label= "RaXML")
-ax.legend(loc = 'best')
-
-
-ax = fig.add_subplot(2, 4, 7)
-ax.set_title("GeoUnrooted")
-ax.plot(x,GeoUnrooted_hmm, marker='.' ,label= "phyloHMM")
-ax.plot(x,GeoUnrooted_b, marker='.' ,label= "Beast")
-ax.plot(x,GeoUnrooted_rax, marker='.' ,label= "RaXML")
-ax.legend(loc = 'best')
+# ax = fig.add_subplot(2, 4, 1)
+# ax.set_title("Quartet")
+# ax.plot(x,Quartet_hmm ,label= "phyloHMM")
+# ax.plot(x,Quartet_b,label= "Beast")
+# ax.plot(x,Quartet_rax,label= "RaXML")
+# ax.legend(loc = 'best')
+#
+# ax = fig.add_subplot(2, 4, 2)
+# ax.set_title("PathDiffernce")
+# ax.plot(x,PathDiffernce_hmm, marker='.' ,label= "phyloHMM")
+# ax.plot(x,PathDiffernce_b, marker='.' ,label= "Beast")
+# ax.plot(x,PathDiffernce_rax, marker='.' ,label= "RaXML")
+# ax.legend(loc = 'best')
+#
+# ax = fig.add_subplot(2, 4, 3)
+# ax.set_title("RF")
+# ax.plot(x,RF_hmm, marker='.' ,label= "phyloHMM")
+# ax.plot(x,RF_b, marker='.' ,label= "Beast")
+# ax.plot(x,RF_rax, marker='.' ,label= "RaXML")
+# ax.legend(loc = 'best')
+#
+# ax = fig.add_subplot(2, 4, 4)
+# ax.set_title("MatchingSplit")
+# ax.plot(x,MatchingSplit_hmm, marker='.' ,label= "phyloHMM")
+# ax.plot(x,MatchingSplit_b, marker='.' ,label= "Beast")
+# ax.plot(x,MatchingSplit_rax, marker='.' ,label= "RaXML")
+# ax.legend(loc = 'best')
+#
+#
+# ax = fig.add_subplot(2, 4, 5)
+# ax.set_title("UMAST")
+# ax.plot(x,UMAST_hmm, marker='.' ,label= "phyloHMM")
+# ax.plot(x,UMAST_b, marker='.' ,label= "Beast")
+# ax.plot(x,UMAST_rax, marker='.' ,label= "RaXML")
+# ax.legend(loc = 'best')
+#
+# ax = fig.add_subplot(2, 4, 6)
+# ax.set_title("RFWeighted")
+# ax.plot(x,RFWeighted_hmm, marker='.' ,label= "phyloHMM")
+# ax.plot(x,RFWeighted_b, marker='.' ,label= "Beast")
+# ax.plot(x,RFWeighted_rax, marker='.' ,label= "RaXML")
+# ax.legend(loc = 'best')
+#
+#
+# ax = fig.add_subplot(2, 4, 7)
+# ax.set_title("GeoUnrooted")
+# ax.plot(x,GeoUnrooted_hmm, marker='.' ,label= "phyloHMM")
+# ax.plot(x,GeoUnrooted_b, marker='.' ,label= "Beast")
+# ax.plot(x,GeoUnrooted_rax, marker='.' ,label= "RaXML")
+# ax.legend(loc = 'best')
 
 # plt.savefig("cmpTree.jpeg")
 
