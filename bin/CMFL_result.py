@@ -24,7 +24,9 @@ def CFML_recombination(CFML_recomLog):
         node = df['Node'][i]
         if "NODE_" in str(node):
             node = node[5:]
-        CFMLData[s:e,int(node)] = 1
+        mynode = int(give_taxon_index(tree, node))
+        CFMLData[s:e, mynode] = 1
+        # CFMLData[s:e,int(node)] = 1
 
     return CFMLData
 # **********************************************************************************************************************
