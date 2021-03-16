@@ -439,7 +439,7 @@ process mergeTreeFiles {
      
      """
          
-       python3.8 $PWD/bin/mergeFiles.py ${beastHMMTree}  ${CFMLtree}  ${gubbinstree} ${myRaxML} ${beastTree}  > allOtherTrees.newick
+       python3.8 $PWD/bin/mergeFiles.py ${beastHMMTree}  ${myRaxML}  ${beastTree}  ${CFMLtree}  ${gubbinstree} > allOtherTrees.newick
        
      """
 

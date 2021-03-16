@@ -1,7 +1,7 @@
 nextflow.enable.dsl = 2
 
 
-params.genomeSize = '5000'
+params.genomeSize = '10000'
 params.recom_len = '500'
 params.recom_rate = '0.02'
 params.tMRCA = '0.01'
@@ -14,8 +14,8 @@ genome = Channel.value(10)
 frequencies = Channel.value(' 0.2184,0.2606,0.3265,0.1946' )
 rates =  Channel.value('0.975070 ,4.088451 ,0.991465 ,0.640018 ,3.840919 ,1')
 nu_hmm = Channel.of(0.03)
-mix_prob = Channel.of(0.7)
-repeat_range = Channel.value(1..10)
+mix_prob = Channel.of(0.9)
+repeat_range = Channel.value(1..5)
 
 
 
@@ -225,16 +225,16 @@ process CFML_result {
         path myRaxML 
         path CFML_recom
         path CFMLtree
-        val repeat_range
-
+        tuple val(repeat_range), path('recomlog') 
 
 
      output:
         path 'CFML_Recombination.jpeg' , emit: CFMLFig
+        path 'rmse_CFML.csv' , emit : rmse_CFML 
 
 
      """
-       python3.8 /home/nehleh/PhyloCode/RecomPhyloHMM/bin/CMFL_result.py -t ${myRaxML} -a ${wholegenome} -ct ${CFMLtree} -c ${CFML_recom} 
+       python3.8 /home/nehleh/PhyloCode/RecomPhyloHMM/bin/CMFL_result.py -t ${myRaxML} -a ${wholegenome} -ct ${CFMLtree} -c ${CFML_recom}  -l ${recomlog} 
        
         
      """
@@ -259,7 +259,7 @@ process phyloHMM {
 
      output:
         path 'RecomPartial.xml' , emit: partial_XML 
-        path 'rmse.csv' , emit : rmse 
+        path 'rmse_phylohmm.csv' , emit : rmse_phylohmm 
         path 'PhyloHMM_Recombination.jpeg' , emit: phyloHMMFig
         path 'Recom_phyloHMM_Log.txt' , emit: phyloHMMLog
         val nu_hmm , emit: my_nu
@@ -281,14 +281,15 @@ process RMSE_summary {
      
 
      input: 
-        path collectedRMSE
+        path collectedRMSE_HMM
+        path collectedRMSE_CFML
 
   
      output:
          path 'RMSE_comparison.jpeg' , emit: rmse_plot
     
      """
-       python3.8  /home/nehleh/PhyloCode/RecomPhyloHMM/bin/rmse_summary.py -f rmse.csv
+       python3.8  /home/nehleh/PhyloCode/RecomPhyloHMM/bin/rmse_summary.py -p rmse_phylohmm.csv -c rmse_CFML.csv
        
      """
 }
@@ -302,9 +303,9 @@ process Beast_partial {
 
      input:
         path partial_XML
-        val genome
-        val nu_hmm
         val repeat_range
+        each nu_hmm
+        each mix_prob
          
          
      output:    
@@ -325,12 +326,12 @@ process treeannotator_partial {
 
      input:   
         path beastPartialTree
-        each genome
-        each nu_hmm
         val repeat_range
+        each nu_hmm
+        each mix_prob
          
          
-     output:
+     output:   
      
          path 'beastOurTree.nexus' , emit: beastOurTree
 
@@ -347,12 +348,11 @@ process convertor_ourTree {
      publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_nu_${nu_hmm}_prob_${mix_prob}_$filename" }
 
      
-     
      input: 
         path beastOurTree
-        each genome
-        each nu_hmm
         val repeat_range
+        each nu_hmm
+        each mix_prob
 
     
      output:
@@ -376,9 +376,9 @@ process mergeTreeFiles {
          path beastTree
          path gubbinstree
          path CFMLtree
-         each genome
-         each nu_hmm
          val repeat_range
+         each nu_hmm
+         each mix_prob    
          
 
     output:
@@ -402,9 +402,9 @@ process TreeCmp {
      
          tuple val(repeat_range), path('clonaltree')
          path allOtherTrees
-         each genome
-         each nu_hmm
          val repeat_range
+         each nu_hmm
+         each mix_prob
          
          
      output:
@@ -454,11 +454,11 @@ workflow {
 
     BaciSim(genome,repeat_range)
     
-//    seq_gen(BaciSim.out.BaciSimtrees,frequencies,rates)
+    seq_gen(BaciSim.out.BaciSimtrees,frequencies,rates)
     
 //    Gubbins(seq_gen.out.wholegenome,seq_gen.out.range)
 
-//    get_raxml_tree(seq_gen.out.wholegenome,seq_gen.out.range)
+    get_raxml_tree(seq_gen.out.wholegenome,seq_gen.out.range)
     
 //    make_xml_seq(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,seq_gen.out.range)
 //    
@@ -469,9 +469,9 @@ workflow {
 //    convertor_SeqTree(treeannotator_alignment.out.SeqTree,seq_gen.out.range)  
    
 //    CFML(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,seq_gen.out.range)
-//
+
 //    CFML_result(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,CFML.out.CFML_recom,CFML.out.CFMLtree,seq_gen.out.range)
-//   
+   
 //    phyloHMM(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,BaciSim.out.recomlog,CFML.out.CFML_recom,seq_gen.out.range,nu_hmm,mix_prob)
 //    
 //    collectedRMSE = phyloHMM.out.rmse.collectFile(name:"rmse.csv",storeDir:"/home/nehleh/work/results/Summary_Results", keepHeader:false , sort: false) 
