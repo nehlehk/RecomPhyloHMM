@@ -2,7 +2,7 @@ nextflow.enable.dsl = 2
 
 
 params.genomeSize = '100000'
-params.recom_len = '500'
+params.recom_len = '700'
 params.recom_rate = '0.005'
 params.tMRCA = '0.01'
 params.nu_sim = '0.2'
@@ -14,7 +14,9 @@ genome = Channel.value(10)
 frequencies = Channel.value(' 0.2184,0.2606,0.3265,0.1946' )
 rates =  Channel.value('0.975070 ,4.088451 ,0.991465 ,0.640018 ,3.840919 ,1')
 nu_hmm = Channel.of(0.01,0.02,0.03)
-mix_prob = Channel.of(0.7,0.8,0.9)
+//mix_prob = Channel.of(0.7,0.8,0.9)
+//nu_hmm = Channel.of(0.03)
+mix_prob = Channel.of(0.9)
 repeat_range = Channel.value(1..10)
 
 
@@ -271,7 +273,7 @@ process CFML_result {
        
         
      """
-}
+
 
 
 
@@ -339,15 +341,15 @@ process Beast_partial {
      conda "conda-forge::python=3.7  bioconda::beast2"
      errorStrategy 'retry'
      maxRetries 3
-     label 'medium'
+     label 'short'
 
 
 
      input:
         path partial_XML
-        each genome
-        each nu_hmm
         val repeat_range
+        each nu_hmm
+        each mix_prob
          
          
      output:    
@@ -371,9 +373,9 @@ process treeannotator_partial {
 
      input:   
         path beastPartialTree
-        each genome
-        each nu_hmm
         val repeat_range
+        each nu_hmm
+        each mix_prob
          
          
      output:
@@ -398,9 +400,9 @@ process convertor_ourTree {
      
      input: 
         path beastOurTree
-        each genome
-        each nu_hmm
         val repeat_range
+        each nu_hmm
+        each mix_prob
 
     
      output:
@@ -427,16 +429,17 @@ process mergeTreeFiles {
          path beastTree
          path gubbinstree
          path CFMLtree
-         each genome
-         each nu_hmm
          val repeat_range
+         each nu_hmm
+         each mix_prob      
          
 
     output:
          path 'allOtherTrees.newick' , emit: allOtherTrees
      
      """
-       python3.8 $PWD/bin/mergeFiles.py ${beastHMMTree}  ${myRaxML}  ${beastTree}  ${CFMLtree}  ${gubbinstree} > allOtherTrees.newick
+         
+       python3.8 $PWD/bin/mergeFiles.py ${beastHMMTree}  ${CFMLtree}  ${gubbinstree} ${myRaxML} ${beastTree}  > allOtherTrees.newick
        
      """
 
@@ -456,16 +459,16 @@ process TreeCmp {
      
          tuple val(repeat_range), path('clonaltree')
          path allOtherTrees
-         each genome
-         each nu_hmm
          val repeat_range
+         each nu_hmm
+         each mix_prob
          
          
      output:
          path 'TreeCmpResult.result' , emit: Comparison     
     
      """
-       java -jar treeCmp.jar  -r ${clonaltree}  -i ${allOtherTrees} -d qt pd rf ms um rfw gdu -o TreeCmpResult.result -W
+       java -jar $PWD/bin/TreeCmp_v2.0-b76/bin/treeCmp.jar  -r ${clonaltree}  -i ${allOtherTrees} -d qt pd rf ms um rfw gdu -o TreeCmpResult.result -W
      """
 }
 
@@ -501,6 +504,7 @@ process phyloHMM_beast {
 
 
 
+
 workflow {
 
     BaciSim(genome,repeat_range)
@@ -531,16 +535,18 @@ workflow {
     
     RMSE_summary(collectedRMSE_HMM,collectedRMSE_CFML)
       
-//    Beast_partial(phyloHMM.out.partial_XML,genome,nu_hmm,seq_gen.out.range)
-//    
-//    treeannotator_partial(Beast_partial.out.beastPartialTree,genome,nu_hmm,seq_gen.out.range)
-//    
-//    convertor_ourTree(treeannotator_partial.out.beastOurTree,genome,nu_hmm,seq_gen.out.range)
-//    
-//    mergeTreeFiles(convertor_ourTree.out.beastHMMTree,get_raxml_tree.out.myRaxML,convertor_SeqTree.out.beastTree,Gubbins.out.gubbinstree,CFML.out.CFMLtree,genome,nu_hmm,seq_gen.out.range)
-//
-//    TreeCmp(BaciSim.out.clonaltree,mergeTreeFiles.out.allOtherTrees,genome,nu_hmm,seq_gen.out.range)
-//    
+    Beast_partial(phyloHMM.out.partial_XML,seq_gen.out.range,nu_hmm,mix_prob)
+    
+    treeannotator_partial(Beast_partial.out.beastPartialTree,seq_gen.out.range,nu_hmm,mix_prob)
+    
+    convertor_ourTree(treeannotator_partial.out.beastOurTree,seq_gen.out.range,nu_hmm,mix_prob)
+    
+    mergeTreeFiles(convertor_ourTree.out.beastHMMTree,get_raxml_tree.out.myRaxML,convertor_SeqTree.out.beastTree,Gubbins.out.gubbinstree,CFML.out.CFMLtree,seq_gen.out.range,nu_hmm,mix_prob)
+
+    TreeCmp(BaciSim.out.clonaltree,mergeTreeFiles.out.allOtherTrees,seq_gen.out.range,nu_hmm,mix_prob)
+    
+    collectedCMP_tree = TreeCmp.out.Comparison.collectFile(name:"all_cmpTrees.result",storeDir:"${PWD}/results/Summary_Results", keepHeader:false , sort: false) 
+    
 //    phyloHMM_beast(seq_gen.out.wholegenome,convertor_ourTree.out.beastHMMTree,BaciSim.out.recomlog,CFML.out.CFML_recom,CFML.out.CFMLtree,nu_hmm,seq_gen.out.range)
 
     

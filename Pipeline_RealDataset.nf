@@ -2,9 +2,9 @@ nextflow.enable.dsl = 2
 
 
 
-params.wholegenome = "${PWD}/wholegenome.fasta"
+params.wholegenome = "${PWD}/SE_2018-20_outbreak.core.full.aln"
 params.xml_file = "${PWD}/bin/GTR_template.xml"
-params.out =  "${PWD}/PipelineResults" 
+params.out =  "${PWD}/salmonella_outbreak" 
 
 
 frequencies = Channel.value(' 0.2184,0.2606,0.3265,0.1946' )
@@ -44,7 +44,7 @@ process get_raxml_tree {
     conda "bioconda::raxml=8.2.12"
     errorStrategy 'retry'
     maxRetries 3
-    label 'short'
+    label 'workq'
 
    
     output:
@@ -85,7 +85,7 @@ process Beast_alignment {
      conda "conda-forge::python=3.7  bioconda::beast2"
      errorStrategy 'retry'
      maxRetries 3
-     label 'short'
+     label 'workq'
 
      input:
          path original_XML
@@ -151,7 +151,7 @@ process CFML {
    conda "bioconda::clonalframeml=1.12"
    errorStrategy 'retry'
    maxRetries 3
-   label 'short'
+   label 'workq'
     
     input:
         path myRaxML 
@@ -176,7 +176,7 @@ process phyloHMM {
      conda "numpy bioconda::dendropy=4.5.2 conda-forge::matplotlib=3.3.4 pandas scikit-learn conda-forge::hmmlearn"
      errorStrategy 'retry'
      maxRetries 3
-     label 'short'    
+     label 'workq'    
 
      input:
         path myRaxML 
@@ -207,7 +207,7 @@ process Beast_partial {
      conda "conda-forge::python=3.7  bioconda::beast2"
      errorStrategy 'retry'
      maxRetries 3
-     label 'short'
+     label 'workq'
 
 
 
