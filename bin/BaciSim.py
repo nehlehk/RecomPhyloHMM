@@ -757,7 +757,7 @@ def recom_on_alignment(recom_num,recom_len,alignment_len,clonal_tree,node_labels
 
     return df,all_data
 # ----------------------------------------------------------------------------------------------------------------------
-def make_recom_fig(alignment_len,nodes_number,tips_number,clonal_tree):
+def make_recom_fig(all_data,alignment_len,nodes_number,tips_number,clonal_tree):
     output = np.zeros((alignment_len, nodes_number))
     for i in range(nodes_number):
       for j in range(recom_num):
@@ -1003,7 +1003,7 @@ if __name__ == "__main__":
     recom_num = give_recom_num(tree,recom_rate,alignment_len)
     node_labels,node_weight = make_nodes_weight(tree, status)
     df,all_data = recom_on_alignment(recom_num, recom_len, alignment_len, clonal_tree, node_labels, node_weight, nu_ex, taxa)
-    make_recom_fig(alignment_len, nodes_number, tips_number, clonal_tree)
+    make_recom_fig(all_data,alignment_len, nodes_number, tips_number, clonal_tree)
     final_report = generate_final_report(df, alignment_len, clonal_tree, tips_number)
 
 

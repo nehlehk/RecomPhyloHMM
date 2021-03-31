@@ -1,7 +1,7 @@
 nextflow.enable.dsl = 2
 
 
-params.genomeSize = '10000'
+params.genomeSize = '5000'
 params.recom_len = '500'
 params.recom_rate = '0.02'
 params.tMRCA = '0.01'
