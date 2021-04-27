@@ -2,22 +2,22 @@ nextflow.enable.dsl = 2
 
 
 params.genomeSize = '100000'
-params.recom_len = '700'
+params.recom_len = '600'
 params.recom_rate = '0.005'
 params.tMRCA = '0.01'
 params.nu_sim = '0.2'
 params.xml_file = "${PWD}/bin/GTR_template.xml"
-params.out =  "${PWD}/results" 
+params.out =  "${PWD}/results_4states" 
 
 
-genome = Channel.value(10)
+genome = Channel.value(50)
 frequencies = Channel.value(' 0.2184,0.2606,0.3265,0.1946' )
 rates =  Channel.value('0.975070 ,4.088451 ,0.991465 ,0.640018 ,3.840919 ,1')
 nu_hmm = Channel.of(0.01,0.02,0.03)
 //mix_prob = Channel.of(0.7,0.8,0.9)
 //nu_hmm = Channel.of(0.03)
 mix_prob = Channel.of(0.9)
-repeat_range = Channel.value(1..10)
+repeat_range = Channel.value(1..30)
 
 
 
@@ -312,7 +312,7 @@ process phyloHMM {
 
 process RMSE_summary {
 
-     publishDir "$PWD/results/Summary_Results", mode: "copy"
+     publishDir "$PWD/results_4states/Summary_Results", mode: "copy"
      maxForks 1
      conda "conda-forge::matplotlib=3.3.4 pandas conda-forge::seaborn"
      errorStrategy 'retry'
@@ -529,23 +529,23 @@ workflow {
    
     phyloHMM(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,BaciSim.out.recomlog,CFML.out.CFML_recom,seq_gen.out.range,nu_hmm,mix_prob)
     
-    collectedRMSE_HMM = phyloHMM.out.rmse_phylohmm.collectFile(name:"rmse_phylohmm.csv",storeDir:"${PWD}/results/Summary_Results", keepHeader:false , sort: false) 
+    collectedRMSE_HMM = phyloHMM.out.rmse_phylohmm.collectFile(name:"rmse_phylohmm.csv",storeDir:"${PWD}/results_4states/Summary_Results", keepHeader:false , sort: false) 
     
-    collectedRMSE_CFML = CFML_result.out.rmse_CFML.collectFile(name:"rmse_CFML.csv",storeDir:"${PWD}/results/Summary_Results", keepHeader:false , sort: false) 
+    collectedRMSE_CFML = CFML_result.out.rmse_CFML.collectFile(name:"rmse_CFML.csv",storeDir:"${PWD}/results_4states/Summary_Results", keepHeader:false , sort: false) 
     
     RMSE_summary(collectedRMSE_HMM,collectedRMSE_CFML)
-      
-    Beast_partial(phyloHMM.out.partial_XML,seq_gen.out.range,nu_hmm,mix_prob)
-    
-    treeannotator_partial(Beast_partial.out.beastPartialTree,seq_gen.out.range,nu_hmm,mix_prob)
-    
-    convertor_ourTree(treeannotator_partial.out.beastOurTree,seq_gen.out.range,nu_hmm,mix_prob)
-    
-    mergeTreeFiles(convertor_ourTree.out.beastHMMTree,get_raxml_tree.out.myRaxML,convertor_SeqTree.out.beastTree,Gubbins.out.gubbinstree,CFML.out.CFMLtree,seq_gen.out.range,nu_hmm,mix_prob)
-
-    TreeCmp(BaciSim.out.clonaltree,mergeTreeFiles.out.allOtherTrees,seq_gen.out.range,nu_hmm,mix_prob)
-    
-    collectedCMP_tree = TreeCmp.out.Comparison.collectFile(name:"all_cmpTrees.result",storeDir:"${PWD}/results/Summary_Results", keepHeader:false , sort: false) 
+//      
+//    Beast_partial(phyloHMM.out.partial_XML,seq_gen.out.range,nu_hmm,mix_prob)
+//    
+//    treeannotator_partial(Beast_partial.out.beastPartialTree,seq_gen.out.range,nu_hmm,mix_prob)
+//    
+//    convertor_ourTree(treeannotator_partial.out.beastOurTree,seq_gen.out.range,nu_hmm,mix_prob)
+//    
+//    mergeTreeFiles(convertor_ourTree.out.beastHMMTree,get_raxml_tree.out.myRaxML,convertor_SeqTree.out.beastTree,Gubbins.out.gubbinstree,CFML.out.CFMLtree,seq_gen.out.range,nu_hmm,mix_prob)
+//
+//    TreeCmp(BaciSim.out.clonaltree,mergeTreeFiles.out.allOtherTrees,seq_gen.out.range,nu_hmm,mix_prob)
+//    
+//    collectedCMP_tree = TreeCmp.out.Comparison.collectFile(name:"all_cmpTrees.result",storeDir:"${PWD}/results_4states/Summary_Results", keepHeader:false , sort: false) 
     
 //    phyloHMM_beast(seq_gen.out.wholegenome,convertor_ourTree.out.beastHMMTree,BaciSim.out.recomlog,CFML.out.CFML_recom,CFML.out.CFMLtree,nu_hmm,seq_gen.out.range)
 
