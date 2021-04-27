@@ -17,7 +17,7 @@ nu_hmm = Channel.of(0.01,0.02,0.03)
 //mix_prob = Channel.of(0.7,0.8,0.9)
 //nu_hmm = Channel.of(0.03)
 mix_prob = Channel.of(0.9)
-repeat_range = Channel.value(1..30)
+repeat_range = Channel.value(1..3)
 
 
 
@@ -27,8 +27,8 @@ process BaciSim {
 
      publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_$filename" }
      maxForks 1
-     errorStrategy 'retry'
-     maxRetries 3
+//     errorStrategy 'retry'
+//     maxRetries 3
      label 'short'  
      conda "numpy bioconda::dendropy=4.5.2 conda-forge::matplotlib=3.3.4 pandas"
 
@@ -273,7 +273,7 @@ process CFML_result {
        
         
      """
-
+}
 
 
 
@@ -509,31 +509,31 @@ workflow {
 
     BaciSim(genome,repeat_range)
     
-    seq_gen(BaciSim.out.BaciSimtrees,frequencies,rates)
-    
-    Gubbins(seq_gen.out.wholegenome,seq_gen.out.range)
-
-    get_raxml_tree(seq_gen.out.wholegenome,seq_gen.out.range)
-    
-    make_xml_seq(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,seq_gen.out.range)
-    
-    Beast_alignment(make_xml_seq.out.original_XML,seq_gen.out.range)
-
-    treeannotator_alignment(Beast_alignment.out.beastSeqTree,seq_gen.out.range)
-
-    convertor_SeqTree(treeannotator_alignment.out.SeqTree,seq_gen.out.range)  
-   
-    CFML(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,seq_gen.out.range)
-
-    CFML_result(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,CFML.out.CFML_recom,CFML.out.CFMLtree,BaciSim.out.recomlog)
-   
-    phyloHMM(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,BaciSim.out.recomlog,CFML.out.CFML_recom,seq_gen.out.range,nu_hmm,mix_prob)
-    
-    collectedRMSE_HMM = phyloHMM.out.rmse_phylohmm.collectFile(name:"rmse_phylohmm.csv",storeDir:"${PWD}/results_4states/Summary_Results", keepHeader:false , sort: false) 
-    
-    collectedRMSE_CFML = CFML_result.out.rmse_CFML.collectFile(name:"rmse_CFML.csv",storeDir:"${PWD}/results_4states/Summary_Results", keepHeader:false , sort: false) 
-    
-    RMSE_summary(collectedRMSE_HMM,collectedRMSE_CFML)
+//    seq_gen(BaciSim.out.BaciSimtrees,frequencies,rates)
+//    
+//    Gubbins(seq_gen.out.wholegenome,seq_gen.out.range)
+//
+//    get_raxml_tree(seq_gen.out.wholegenome,seq_gen.out.range)
+//    
+//    make_xml_seq(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,seq_gen.out.range)
+//    
+//    Beast_alignment(make_xml_seq.out.original_XML,seq_gen.out.range)
+//
+//    treeannotator_alignment(Beast_alignment.out.beastSeqTree,seq_gen.out.range)
+//
+//    convertor_SeqTree(treeannotator_alignment.out.SeqTree,seq_gen.out.range)  
+//   
+//    CFML(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,seq_gen.out.range)
+//
+//    CFML_result(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,CFML.out.CFML_recom,CFML.out.CFMLtree,BaciSim.out.recomlog)
+//   
+//    phyloHMM(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,BaciSim.out.recomlog,CFML.out.CFML_recom,seq_gen.out.range,nu_hmm,mix_prob)
+//    
+//    collectedRMSE_HMM = phyloHMM.out.rmse_phylohmm.collectFile(name:"rmse_phylohmm.csv",storeDir:"${PWD}/results_4states/Summary_Results", keepHeader:false , sort: false) 
+//    
+//    collectedRMSE_CFML = CFML_result.out.rmse_CFML.collectFile(name:"rmse_CFML.csv",storeDir:"${PWD}/results_4states/Summary_Results", keepHeader:false , sort: false) 
+//    
+//    RMSE_summary(collectedRMSE_HMM,collectedRMSE_CFML)
 //      
 //    Beast_partial(phyloHMM.out.partial_XML,seq_gen.out.range,nu_hmm,mix_prob)
 //    
