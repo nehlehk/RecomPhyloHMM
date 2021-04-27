@@ -1,16 +1,16 @@
 nextflow.enable.dsl = 2
 
 
-params.genomeSize = '5000'
-params.recom_len = '500'
-params.recom_rate = '0.02'
+params.genomeSize = '3000'
+params.recom_len = '600'
+params.recom_rate = '0.005'
 params.tMRCA = '0.01'
 params.nu_sim = '0.2'
 params.xml_file = '/home/nehleh/Documents/GTR_template.xml'
 params.out = '/home/nehleh/work/results/'
 
 
-genome = Channel.value(10)
+genome = Channel.value(8)
 frequencies = Channel.value(' 0.2184,0.2606,0.3265,0.1946' )
 rates =  Channel.value('0.975070 ,4.088451 ,0.991465 ,0.640018 ,3.840919 ,1')
 nu_hmm = Channel.of(0.03)
@@ -241,8 +241,7 @@ process CFML_result {
 }
 
 
-
-process phyloHMM {
+process phyloHMM_two {
 
      publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_nu_${nu_hmm}_prob_${mix_prob}_$filename" }
      maxForks 1
@@ -258,10 +257,43 @@ process phyloHMM {
 
 
      output:
-        path 'RecomPartial.xml' , emit: partial_XML 
-        path 'rmse_phylohmm.csv' , emit : rmse_phylohmm 
-        path 'PhyloHMM_Recombination.jpeg' , emit: phyloHMMFig
-        path 'Recom_phyloHMM_Log.txt' , emit: phyloHMMLog
+        path 'RecomPartial.xml' , emit: partial_XML_two
+        path 'rmse_phylohmm.csv' , emit : rmse_phylohmm_two 
+        path 'PhyloHMM_Recombination.jpeg' , emit: phyloHMMFig_two
+        path 'Recom_phyloHMM_Log.txt' , emit: phyloHMMLog_two
+        val nu_hmm , emit: my_nu
+        val mix_prob , emit: prob
+        
+
+     """
+       python3.8 /home/nehleh/PhyloCode/RecomPhyloHMM/bin/phyloHMM_2states.py -t ${myRaxML} -a ${wholegenome}  -x ${params.xml_file} -l ${recomlog}  -c ${CFML_recom} -nu ${nu_hmm} -p ${mix_prob}
+        
+     """
+}
+
+
+
+
+process phyloHMM_four {
+
+     publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_nu_${nu_hmm}_prob_${mix_prob}_$filename" }
+     maxForks 1
+
+     input:
+        path wholegenome
+        path myRaxML 
+        tuple val(repeat_range), path('recomlog') 
+        path CFML_recom
+        val repeat_range
+        each nu_hmm
+        each mix_prob
+
+
+     output:
+        path 'RecomPartial.xml' , emit: partial_XML_four 
+        path 'rmse_phylohmm.csv' , emit : rmse_phylohmm_four
+        path 'PhyloHMM_Recombination.jpeg' , emit: phyloHMMFig_four
+        path 'Recom_phyloHMM_Log.txt' , emit: phyloHMMLog_four
         val nu_hmm , emit: my_nu
         val mix_prob , emit: prob
         
@@ -294,6 +326,28 @@ process RMSE_summary {
      """
 }
 
+
+
+process RMSE_summary_states {
+
+     publishDir "/home/nehleh/work/results/Summary_Results", mode: "copy"
+     maxForks 1
+     
+
+     input: 
+        path collectedRMSE_HMM_two
+        path collectedRMSE_HMM_four
+        path collectedRMSE_CFML
+
+  
+     output:
+         path 'RMSE_comparison_states.jpeg' , emit: rmse_plot
+    
+     """
+       python3.8  /home/nehleh/PhyloCode/RecomPhyloHMM/bin/rmse_plot_states.py -t rmse_phylohmm_two.csv  -f rmse_phylohmm_four.csv -c rmse_CFML.csv
+       
+     """
+}
 
 
 process Beast_partial {
@@ -417,6 +471,30 @@ process TreeCmp {
 
 
 
+process TreeCmp_summary {
+
+     publishDir "/home/nehleh/work/results/Summary_Results", mode: "copy"
+     maxForks 1
+     
+
+     input: 
+        path Comparison
+
+  
+     output:
+         path 'treecmp_Quartet.jpeg' ,       emit: Quartet_plot
+         path 'treecmp_PathDiffernce.jpeg' , emit: PathDiffernce_plot
+         path 'treecmp_RF.jpeg' ,            emit: RF_plot
+         path 'treecmp_MatchingSplit.jpeg' , emit: MatchingSplit_plot
+         path 'treecmp_UMAST.jpeg' ,         emit: UMAST_plot
+         path 'treecmp_RFWeighted.jpeg' ,    emit: RFWeighted_plot
+         path 'treecmp_GeoUnrooted.jpeg' ,   emit: GeoUnrooted_plot
+    
+     """
+       python3.8  /home/nehleh/PhyloCode/RecomPhyloHMM/bin/cmpTree_plot.py -c all_cmpTrees.result
+       
+     """
+}
 
 
 
@@ -456,40 +534,51 @@ workflow {
     
     seq_gen(BaciSim.out.BaciSimtrees,frequencies,rates)
     
-//    Gubbins(seq_gen.out.wholegenome,seq_gen.out.range)
+    Gubbins(seq_gen.out.wholegenome,seq_gen.out.range)
 
     get_raxml_tree(seq_gen.out.wholegenome,seq_gen.out.range)
     
-//    make_xml_seq(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,seq_gen.out.range)
-//    
-//    Beast_alignment(make_xml_seq.out.original_XML,seq_gen.out.range)
-//    
-//    treeannotator_alignment(Beast_alignment.out.beastSeqTree,seq_gen.out.range)
-//
-//    convertor_SeqTree(treeannotator_alignment.out.SeqTree,seq_gen.out.range)  
-   
-//    CFML(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,seq_gen.out.range)
+    make_xml_seq(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,seq_gen.out.range)
+    
+    Beast_alignment(make_xml_seq.out.original_XML,seq_gen.out.range)
+    
+    treeannotator_alignment(Beast_alignment.out.beastSeqTree,seq_gen.out.range)
 
-//    CFML_result(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,CFML.out.CFML_recom,CFML.out.CFMLtree,seq_gen.out.range)
+    convertor_SeqTree(treeannotator_alignment.out.SeqTree,seq_gen.out.range)  
    
-//    phyloHMM(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,BaciSim.out.recomlog,CFML.out.CFML_recom,seq_gen.out.range,nu_hmm,mix_prob)
-//    
-//    collectedRMSE = phyloHMM.out.rmse.collectFile(name:"rmse.csv",storeDir:"/home/nehleh/work/results/Summary_Results", keepHeader:false , sort: false) 
-//    
-//    RMSE_summary(collectedRMSE)
+    CFML(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,seq_gen.out.range)
+
+    CFML_result(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,CFML.out.CFML_recom,CFML.out.CFMLtree,BaciSim.out.recomlog)
+   
+    phyloHMM_two(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,BaciSim.out.recomlog,CFML.out.CFML_recom,seq_gen.out.range,nu_hmm,mix_prob)
+    
+    phyloHMM_four(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,BaciSim.out.recomlog,CFML.out.CFML_recom,seq_gen.out.range,nu_hmm,mix_prob)
+     
+    collectedRMSE_HMM_two = phyloHMM_two.out.rmse_phylohmm_two.collectFile(name:"rmse_phylohmm_two.csv",storeDir:"/home/nehleh/work/results/Summary_Results", keepHeader:false , sort: false) 
+    
+    collectedRMSE_HMM_four = phyloHMM_four.out.rmse_phylohmm_four.collectFile(name:"rmse_phylohmm_four.csv",storeDir:"/home/nehleh/work/results/Summary_Results", keepHeader:false , sort: false)
+    
+    collectedRMSE_CFML = CFML_result.out.rmse_CFML.collectFile(name:"rmse_CFML.csv",storeDir:"/home/nehleh/work/results/Summary_Results", keepHeader:false , sort: false) 
+    
+    RMSE_summary_states(collectedRMSE_HMM_two,collectedRMSE_HMM_four,collectedRMSE_CFML)
+    
+    RMSE_summary(collectedRMSE_HMM,collectedRMSE_CFML)
       
-//    Beast_partial(phyloHMM.out.partial_XML,genome,nu_hmm,seq_gen.out.range)
-//    
-//    treeannotator_partial(Beast_partial.out.beastPartialTree,genome,nu_hmm,seq_gen.out.range)
-//    
-//    convertor_ourTree(treeannotator_partial.out.beastOurTree,genome,nu_hmm,seq_gen.out.range)
-//    
-//    mergeTreeFiles(convertor_ourTree.out.beastHMMTree,get_raxml_tree.out.myRaxML,convertor_SeqTree.out.beastTree,Gubbins.out.gubbinstree,CFML.out.CFMLtree,genome,nu_hmm,seq_gen.out.range)
-//
-//    TreeCmp(BaciSim.out.clonaltree,mergeTreeFiles.out.allOtherTrees,genome,nu_hmm,seq_gen.out.range)
-//    
+    Beast_partial(phyloHMM.out.partial_XML,seq_gen.out.range,nu_hmm,mix_prob)
+    
+    treeannotator_partial(Beast_partial.out.beastPartialTree,seq_gen.out.range,nu_hmm,mix_prob)
+    
+    convertor_ourTree(treeannotator_partial.out.beastOurTree,seq_gen.out.range,nu_hmm,mix_prob)
+    
+    mergeTreeFiles(convertor_ourTree.out.beastHMMTree,get_raxml_tree.out.myRaxML,convertor_SeqTree.out.beastTree,Gubbins.out.gubbinstree,CFML.out.CFMLtree,seq_gen.out.range,nu_hmm,mix_prob)
+
+    TreeCmp(BaciSim.out.clonaltree,mergeTreeFiles.out.allOtherTrees,seq_gen.out.range,nu_hmm,mix_prob)
+    
+    collectedCMP_tree = TreeCmp.out.Comparison.collectFile(name:"all_cmpTrees.result",storeDir:"/home/nehleh/work/results/Summary_Results", keepHeader:false , sort: false) 
+    
+    TreeCmp_summary(collectedCMP_tree)
+     
 //    phyloHMM_beast(seq_gen.out.wholegenome,convertor_ourTree.out.beastHMMTree,BaciSim.out.recomlog,CFML.out.CFML_recom,CFML.out.CFMLtree,nu_hmm,seq_gen.out.range)
 
-    
-       
+          
 }
