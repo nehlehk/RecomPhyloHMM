@@ -19,4 +19,5 @@ dependencies:
   - clonalframeml=1.12
   - scikit-learn
   - hmmlearn
+  - seaborn
 
