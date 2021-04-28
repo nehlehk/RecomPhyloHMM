@@ -3,9 +3,11 @@ name: nfk_phylohmm
 channels:
   - bioconda
   - conda-forge
+  - anaconda
   - defaults
 dependencies:
   - numpy
+  - seaborn=0.11.1
   - dendropy=4.5.2
   - matplotlib=3.3.4
   - pandas
@@ -19,5 +21,5 @@ dependencies:
   - clonalframeml=1.12
   - scikit-learn
   - hmmlearn
-  - seaborn
+
 
