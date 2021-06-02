@@ -770,14 +770,17 @@ def make_recom_fig(all_data,alignment_len,nodes_number,tips_number,clonal_tree):
     color=['red', 'green' ,'purple', 'blue','black']
     clonaltree = Tree.get_from_string(clonal_tree,schema='newick')
     set_index(clonaltree)
-    for i in range(nodes_number):
-      ax = fig.add_subplot(nodes_number,1,i+1)
-      if i >= tips_number:
-        desc = set()
-        d = give_descendents(clonaltree,i,desc)
-        ax.plot(output[:,i] ,label= str(i)+' is mrca:'+ str(d) ,color = color[i%5])
-      else:
-        ax.plot(output[:,i] ,label= i ,color = color[i%5])
+    # for i in range(nodes_number):
+    for i in range(tips_number):
+      # ax = fig.add_subplot(nodes_number,1,i+1)
+      ax = fig.add_subplot(tips_number, 1, i + 1)
+      # if i >= tips_number:
+      #   desc = set()
+      #   d = give_descendents(clonaltree,i,desc)
+      #   ax.plot(output[:,i] ,label= str(i)+' is mrca:'+ str(d) ,color = color[i%5])
+      # else:
+      # if i < tips_number:
+      ax.plot(output[:,i] ,label= i ,color = color[i%5])
       ax.legend( bbox_to_anchor=(0.045, 1.5) ,prop={'size':10} )
       ax.set_frame_on(False)
       ax.axis('off')

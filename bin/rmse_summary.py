@@ -3,8 +3,7 @@ import matplotlib.pyplot as plt
 import argparse
 import seaborn as sns
 import numpy as np
-# from pycallgraph import PyCallGraph
-# from pycallgraph.output import GraphvizOutput
+
 
 parser = argparse.ArgumentParser(description='''You did not specify any parameters.''')
 parser.add_argument('-p', "--phylohmm", type=str, help='rmse_phylohmm')
@@ -15,9 +14,9 @@ args = parser.parse_args()
 rmse_phylohmm = args.phylohmm
 rmse_CFML = args.CFML
 
-# with PyCallGraph(output=GraphvizOutput()):
-# rmse_phylohmm = '/home/nehleh/PhyloCode/Result/test/results/Summary_Results/rmse_phylohmm.csv'
-# rmse_CFML = '/home/nehleh/PhyloCode/Result/test/results/Summary_Results/rmse_CFML.csv'
+
+# rmse_phylohmm = '/home/nehleh/PhyloCode/Result/30nodes-30samples-len100000/Summary_Results/rmse_phylohmm_two.csv'
+# rmse_CFML = '/home/nehleh/PhyloCode/Result/30nodes-30samples-len100000/Summary_Results/rmse_CFML.csv'
 
 
 f = open(rmse_phylohmm, "r")
@@ -138,5 +137,5 @@ for n in Nu:
 # ax2.grid(True, 'major', 'y', ls='--', lw=.5, c='k', alpha=.3)
 # ax2.legend()
 
-# plt.show()
-plt.savefig("RMSE_comparison.jpeg")
+plt.show()
+# plt.savefig("RMSE_comparison.jpeg")

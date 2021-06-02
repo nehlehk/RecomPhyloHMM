@@ -15,15 +15,16 @@ def set_label(tree):
             node.label = node.taxon.label
 # **********************************************************************************************************************
 def CFML_recombination(CFML_recomLog):
-    CFMLData = np.zeros((alignment_len, nodes_number))
+    CFMLData = np.zeros((alignment_len, tips_num))
+    # CFMLData = np.zeros((alignment_len, nodes_number))
     df = pd.read_csv(CFML_recomLog, sep='\t', engine='python')
     # print(df)
     for i in range(len(df)):
         s = df['Beg'][i]
         e = df['End'][i]
         node = df['Node'][i]
-        if "NODE_" in str(node):
-            node = node[5:]
+        # if "NODE_" in str(node):
+        #     node = node[5:]
         mynode = int(give_taxon_index(tree, node))
         CFMLData[s:e, mynode] = 1
         # CFMLData[s:e,int(node)] = 1
@@ -45,16 +46,19 @@ def give_descendents_CFML(tree,node_label,result):
 def CFML_resultFig(tree,CFMLData):
     fig = plt.figure(figsize=(tips_num + 9, tips_num / 2))
     color = ['red', 'green', 'purple', 'blue', 'black']
-    taxa = CFMLData.shape[1]
-    for i in range(taxa):
-        ax = fig.add_subplot(taxa, 1, i + 1)
-        if i >= tips_num:
-            node_label = str('NODE '+ str(i+1))
-            desc = set()
-            d = give_descendents_CFML(tree, node_label, desc)
-            ax.plot(CFMLData[:, i], label=str(i+1) + ' is mrca:' + str(d), color=color[i % 5])
-        else:
-            ax.plot(CFMLData[:, i], label=i, color=color[i % 5])
+    # taxa = CFMLData.shape[1]
+    # for i in range(taxa):
+    for i in range(tips_num):
+        # ax = fig.add_subplot(taxa, 1, i + 1)
+        ax = fig.add_subplot(tips_num, 1, i + 1)
+        # if i >= tips_num:
+        #     node_label = str('NODE '+ str(i+1))
+        #     desc = set()
+        #     d = give_descendents_CFML(tree, node_label, desc)
+        #     ax.plot(CFMLData[:, i], label=str(i+1) + ' is mrca:' + str(d), color=color[i % 5])
+        # else:
+        # if i < tips_num:
+        ax.plot(CFMLData[:, i], label=i, color=color[i % 5])
         ax.legend(bbox_to_anchor=(0.045, 1.5), prop={'size': 10})
         # ax.plot(CFMLData[:, i],label=i, color=color[i % 5])
         # ax.legend(bbox_to_anchor=(0.04, 1.33) ,prop={'size':10} )
@@ -66,7 +70,8 @@ def CFML_resultFig(tree,CFMLData):
     plt.savefig("CFML_Recombination.jpeg")
 # **********************************************************************************************************************
 def real_recombination(recomLog):
-    realData = np.zeros((alignment_len, nodes_number))
+    realData = np.zeros((alignment_len, tips_num))
+    # realData = np.zeros((alignment_len, nodes_number))
     df = pd.read_csv(recomLog,sep='\t', engine='python')
     # print(df)
     recom = df.loc[df['status'] != 'clonal']

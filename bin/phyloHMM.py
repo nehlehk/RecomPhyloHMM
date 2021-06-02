@@ -618,36 +618,34 @@ def internal_recom(internalNode, tips_num):
 # **********************************************************************************************************************
 def recom_resultFig(tree,tipdata,threshold,internalNode):
     my_tipdata = tipdata.transpose(1, 0, 2)
-    # output = np.zeros((alignment_len, tips_num))
-    output = np.zeros((alignment_len, nodes_number))
-    recomeNode = internal_recom(internalNode, tips_num)
+    output = np.zeros((alignment_len, tips_num))
+    # output = np.zeros((alignment_len, nodes_number))
+    # recomeNode = internal_recom(internalNode, tips_num)
     for i in range(alignment_len):
         for j in range(nodes_number):
             if (j < tips_num):
                 if ((my_tipdata[j, i, 0] > threshold) and (my_tipdata[j, i, 0] < 1.0)) or (
                         (my_tipdata[j, i, 1] > threshold) and (my_tipdata[j, i, 1] < 1.0)):
                     output[i, j] = 1
-            elif (j in recomeNode) and (internalPos[j - tips_num][i] > threshold):
-                output[i, j] = 1
-
-    # for i in range(my_tipdata.shape[1]):
-    #     for j in range(my_tipdata.shape[0]):
-    #         if ((my_tipdata[j, i, 0] > threshold) and (my_tipdata[j, i, 0] < 1.0)) or ((my_tipdata[j, i, 1] > threshold) and (my_tipdata[j, i, 1] < 1.0)):
-    #             output[i, j] = 1
+            # elif (j in recomeNode) and (internalPos[j - tips_num][i] > threshold):
+            #     output[i, j] = 1
 
 
     fig = plt.figure(figsize=(tips_num + 9, tips_num / 2))
     color = ['red', 'green', 'purple', 'blue', 'black']
     clonaltree = Tree.get_from_path(tree_path, 'newick')
     set_index(clonaltree, alignment)
-    for i in range(nodes_number):
-        ax = fig.add_subplot(nodes_number, 1, i + 1)
-        if i >= tips_num:
-            desc = set()
-            d = give_descendents(clonaltree, i, desc)
-            ax.plot(output[:, i], label=str(i) + ' is mrca:' + str(d), color=color[i % 5])
-        else:
-            ax.plot(output[:, i], label=give_taxon(clonaltree, i), color=color[i % 5])
+    # for i in range(nodes_number):
+    for i in range(tips_num):
+        ax = fig.add_subplot(tips_num, 1, i + 1)
+        # ax = fig.add_subplot(nodes_number, 1, i + 1)
+        # if i >= tips_num:
+        #     desc = set()
+        #     d = give_descendents(clonaltree, i, desc)
+        #     ax.plot(output[:, i], label=str(i) + ' is mrca:' + str(d), color=color[i % 5])
+        # else:
+        # if i < tips_num:
+        ax.plot(output[:, i], label=give_taxon(clonaltree, i), color=color[i % 5])
         ax.legend(bbox_to_anchor=(0.045, 1.5), prop={'size': 10})
         ax.set_frame_on(False)
         ax.axis('off')
@@ -734,7 +732,8 @@ def nodes_separation(nodes):
   return mynodes
 # **********************************************************************************************************************
 def real_recombination(recomLog):
-    realData = np.zeros((alignment_len, nodes_number))
+    realData = np.zeros((alignment_len, tips_num))
+    # realData = np.zeros((alignment_len, nodes_number))
     df = pd.read_csv(recomLog,sep='\t', engine='python')
     # print(df)
     recom = df.loc[df['status'] != 'clonal']
@@ -764,17 +763,18 @@ def predict_recombination_old(tipdata,mixtureProb):
     return predictionData
 # **********************************************************************************************************************
 def predict_recombination(tipdata,mixtureProb,internalNode):
-    predictionData = np.zeros((alignment_len, nodes_number))
-    recomeNode = internal_recom(internalNode, tips_num)
+    predictionData = np.zeros((alignment_len, tips_num))
+    # predictionData = np.zeros((alignment_len, nodes_number))
+    # recomeNode = internal_recom(internalNode, tips_num)
     for site in range(alignment_len):
-        for i in range(nodes_number):
-            if i < tips_num:
+        for i in range(tips_num):
+            # if i < tips_num:
                 if max(item for item in tipdata[site, i] if item != 1) > mixtureProb:
                     predictionData[site, i] = 1
                 else:
                     predictionData[site, i] = 0
-            elif (i in recomeNode) and (internalPos[i - tips_num][site] > mixtureProb):
-                    predictionData[site, i] = 1
+            # elif (i in recomeNode) and (internalPos[i - tips_num][site] > mixtureProb):
+            #         predictionData[site, i] = 1
     return predictionData
 # **********************************************************************************************************************
 def calc_rmse(data1,data2):
@@ -990,7 +990,7 @@ if __name__ == "__main__":
         realData = real_recombination(recomLog)
         phyloHMMData = predict_recombination(tipdata,mixtureProb,internalNode)
         clonalData = np.zeros((alignment_len, tips_num))
-        CFMLData = CFML_recombination(cfml_path)
+        # CFMLData = CFML_recombination(cfml_path)
         # CFML_resultFig(cfml_tree, CFMLData)
 
         rmse_real_phyloHMM= mean_squared_error(realData,phyloHMMData,squared=False)

@@ -1,21 +1,21 @@
 nextflow.enable.dsl = 2
 
 
-params.genomeSize = '1000'
-params.recom_len = '300'
-params.recom_rate = '0.05'
+params.genomeSize = '10000'
+params.recom_len = '600'
+params.recom_rate = '0.005'
 params.tMRCA = '0.01'
 params.nu_sim = '0.2'
 params.xml_file = '/home/nehleh/Documents/GTR_template.xml'
 params.out = '/home/nehleh/work/results/'
 
 
-genome = Channel.value(8)
+genome = Channel.value(10)
 frequencies = Channel.value(' 0.2184,0.2606,0.3265,0.1946' )
 rates =  Channel.value('0.975070 ,4.088451 ,0.991465 ,0.640018 ,3.840919 ,1')
 nu_hmm = Channel.of(0.03)
 mix_prob = Channel.of(0.9)
-repeat_range = Channel.value(1..3)
+repeat_range = Channel.value(1..2)
 
 
 
@@ -117,6 +117,7 @@ process get_raxml_tree {
 process make_xml_seq {
 
     publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_$filename" }
+    maxForks 1
 
     input:
         path wholegenome
@@ -137,6 +138,7 @@ process make_xml_seq {
 process Beast_alignment {
 
     publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_$filename" }
+    maxForks 1
 
 
      input:
@@ -157,6 +159,7 @@ process Beast_alignment {
 process treeannotator_alignment {
 
      publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_$filename" }  
+     maxForks 1
 
      
      input:
@@ -176,6 +179,7 @@ process treeannotator_alignment {
 process convertor_SeqTree {
 
      publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_$filename" }  
+     maxForks 1
 
      
      input:
@@ -244,7 +248,6 @@ process CFML_result {
 process phyloHMM_two {
 
      publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_nu_${nu_hmm}_prob_${mix_prob}_$filename" }
-     maxForks 1
 
      input:
         path wholegenome
@@ -259,7 +262,7 @@ process phyloHMM_two {
      output:
         path 'RecomPartial.xml' , emit: partial_XML_two
         path 'rmse_phylohmm.csv' , emit : rmse_phylohmm_two 
-        path 'PhyloHMM_Recombination.jpeg' , emit: phyloHMMFig_two
+        path 'PhyloHMM_Recombination_2S.jpeg' , emit: phyloHMMFig_two
         path 'Recom_phyloHMM_Log.txt' , emit: phyloHMMLog_two
         val nu_hmm , emit: my_nu
         val mix_prob , emit: prob
@@ -277,7 +280,6 @@ process phyloHMM_two {
 process phyloHMM_four {
 
      publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_nu_${nu_hmm}_prob_${mix_prob}_$filename" }
-     maxForks 1
 
      input:
         path wholegenome
@@ -387,11 +389,11 @@ process treeannotator_partial_four {
          
      output:   
      
-         path 'beastOurTree.nexus' , emit: beastOurTree_four
+         path 'beastOurTree_four.nexus' , emit: beastOurTree_four
 
      
      """
-       /home/nehleh/Documents/0_Research/Software/BEAST_with_JRE.v2.6.3.Linux/beast/bin/treeannotator -b 10  ${beastPartialTree_four}  beastOurTree.nexus      
+       /home/nehleh/Documents/0_Research/Software/BEAST_with_JRE.v2.6.3.Linux/beast/bin/treeannotator -b 10  ${beastPartialTree_four}  beastOurTree_four.nexus      
      """
 }
 
@@ -410,10 +412,10 @@ process convertor_ourTree_four {
 
     
      output:
-         path 'beastHMMTree.newick' , emit:  beastHMMTree_four
+         path 'beastHMMTree_four.newick' , emit:  beastHMMTree_four
          
      """
-       python3.8 /home/nehleh/PhyloCode/RecomPhyloHMM/bin/NexusToNewick.py -t ${beastOurTree_four} -o 'beastHMMTree.newick'
+       python3.8 /home/nehleh/PhyloCode/RecomPhyloHMM/bin/NexusToNewick.py -t ${beastOurTree_four} -o 'beastHMMTree_four.newick'
         
      """
 }
@@ -456,11 +458,11 @@ process treeannotator_partial_two {
          
      output:   
      
-         path 'beastOurTree.nexus' , emit: beastOurTree_two
+         path 'beastOurTree_two.nexus' , emit: beastOurTree_two
 
      
      """
-       /home/nehleh/Documents/0_Research/Software/BEAST_with_JRE.v2.6.3.Linux/beast/bin/treeannotator -b 10  ${beastPartialTree_two}  beastOurTree.nexus      
+       /home/nehleh/Documents/0_Research/Software/BEAST_with_JRE.v2.6.3.Linux/beast/bin/treeannotator -b 10  ${beastPartialTree_two}  beastOurTree_two.nexus      
      """
 }
 
@@ -479,10 +481,10 @@ process convertor_ourTree_two {
 
     
      output:
-         path 'beastHMMTree.newick' , emit:  beastHMMTree_two
+         path 'beastHMMTree_two.newick' , emit:  beastHMMTree_two
          
      """
-       python3.8 /home/nehleh/PhyloCode/RecomPhyloHMM/bin/NexusToNewick.py -t ${beastOurTree_two} -o 'beastHMMTree.newick'
+       python3.8 /home/nehleh/PhyloCode/RecomPhyloHMM/bin/NexusToNewick.py -t ${beastOurTree_two} -o 'beastHMMTree_two.newick'
         
      """
 }
@@ -568,35 +570,6 @@ process TreeCmp_summary {
 
 
 
-process phyloHMM_beast {
-
-     publishDir "${params.out}" , mode: 'copy' , saveAs:{ filename -> "num_${repeat_range}/num_${repeat_range}_nu_${nu_hmm}_prob_${mix_prob}_$filename" }
-     maxForks 1
-
-     input:
-        path wholegenome
-        path beastHMMTree 
-        tuple val(repeat_range), path('recomlog') 
-        path CFML_recom
-        path CFMLtree
-        each nu_hmm
-        val repeat_range
-
-//     output:
-//        path 'rmse.rmse' , emit : rmse_partialBeast 
-//        path 'PhyloHMM_Recombination.jpeg' , emit: phyloHMMFig_partialBeast
-
-//      -p ${mix_prob} -nu ${nu_hmm}
-     """
-       python3.8 /home/nehleh/PhyloCode/RecomPhyloHMM/bin/phyloHMM.py -t ${beastHMMTree} -a ${wholegenome}  -l ${recomlog}  -nu ${nu_hmm} -ct ${CFMLtree} -c ${CFML_recom} -x ${params.xml_file}
-       
-        
-     """
-}
-
-
-
-
 
 workflow {
 
@@ -607,58 +580,58 @@ workflow {
     Gubbins(seq_gen.out.wholegenome,seq_gen.out.range)
 
     get_raxml_tree(seq_gen.out.wholegenome,seq_gen.out.range)
-    
-    make_xml_seq(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,seq_gen.out.range)
-    
-    Beast_alignment(make_xml_seq.out.original_XML,seq_gen.out.range)
-    
-    treeannotator_alignment(Beast_alignment.out.beastSeqTree,seq_gen.out.range)
 
-    convertor_SeqTree(treeannotator_alignment.out.SeqTree,seq_gen.out.range)  
-   
-    CFML(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,seq_gen.out.range)
+   CFML(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,seq_gen.out.range)
 
-    CFML_result(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,CFML.out.CFML_recom,CFML.out.CFMLtree,BaciSim.out.recomlog)
+   CFML_result(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,CFML.out.CFML_recom,CFML.out.CFMLtree,BaciSim.out.recomlog)
    
-    phyloHMM_two(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,BaciSim.out.recomlog,CFML.out.CFML_recom,seq_gen.out.range,nu_hmm,mix_prob)
+   phyloHMM_two(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,BaciSim.out.recomlog,CFML.out.CFML_recom,seq_gen.out.range,nu_hmm,mix_prob)
+   
+   phyloHMM_four(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,BaciSim.out.recomlog,CFML.out.CFML_recom,seq_gen.out.range,nu_hmm,mix_prob)
     
-    phyloHMM_four(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,BaciSim.out.recomlog,CFML.out.CFML_recom,seq_gen.out.range,nu_hmm,mix_prob)
+   collectedRMSE_HMM_two = phyloHMM_two.out.rmse_phylohmm_two.collectFile(name:"rmse_phylohmm_two.csv",storeDir:"/home/nehleh/work/results/Summary_Results", keepHeader:false , sort: false) 
+   
+   collectedRMSE_HMM_four = phyloHMM_four.out.rmse_phylohmm_four.collectFile(name:"rmse_phylohmm_four.csv",storeDir:"/home/nehleh/work/results/Summary_Results", keepHeader:false , sort: false)
+   
+   collectedRMSE_CFML = CFML_result.out.rmse_CFML.collectFile(name:"rmse_CFML.csv",storeDir:"/home/nehleh/work/results/Summary_Results", keepHeader:false , sort: false) 
+   
+   RMSE_summary_states(collectedRMSE_HMM_two,collectedRMSE_HMM_four,collectedRMSE_CFML)
+    
+  //  RMSE_summary(collectedRMSE_HMM_four,collectedRMSE_CFML)
+
+    
+    // make_xml_seq(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,seq_gen.out.range)
+    
+    // Beast_alignment(make_xml_seq.out.original_XML,seq_gen.out.range)
+    
+    // treeannotator_alignment(Beast_alignment.out.beastSeqTree,seq_gen.out.range)
+
+    // convertor_SeqTree(treeannotator_alignment.out.SeqTree,seq_gen.out.range)  
+   
      
-    collectedRMSE_HMM_two = phyloHMM_two.out.rmse_phylohmm_two.collectFile(name:"rmse_phylohmm_two.csv",storeDir:"/home/nehleh/work/results/Summary_Results", keepHeader:false , sort: false) 
-    
-    collectedRMSE_HMM_four = phyloHMM_four.out.rmse_phylohmm_four.collectFile(name:"rmse_phylohmm_four.csv",storeDir:"/home/nehleh/work/results/Summary_Results", keepHeader:false , sort: false)
-    
-    collectedRMSE_CFML = CFML_result.out.rmse_CFML.collectFile(name:"rmse_CFML.csv",storeDir:"/home/nehleh/work/results/Summary_Results", keepHeader:false , sort: false) 
-    
-    RMSE_summary_states(collectedRMSE_HMM_two,collectedRMSE_HMM_four,collectedRMSE_CFML)
-    
-    RMSE_summary(collectedRMSE_HMM,collectedRMSE_CFML)
-    
-    
-      
-    Beast_partial_four(phyloHMM_four.out.partial_XML_four,seq_gen.out.range,nu_hmm,mix_prob)
-    
-    treeannotator_partial_four(Beast_partial_four.out.beastPartialTree_four,seq_gen.out.range,nu_hmm,mix_prob)
-    
-    convertor_ourTree_four(treeannotator_partial_four.out.beastOurTree_four,seq_gen.out.range,nu_hmm,mix_prob)
-    
-    
-    Beast_partial_two(phyloHMM_two.out.partial_XML_two,seq_gen.out.range,nu_hmm,mix_prob)
-    
-    treeannotator_partial_two(Beast_partial_two.out.beastPartialTree_two,seq_gen.out.range,nu_hmm,mix_prob)
-    
-    convertor_ourTree_two(treeannotator_partial_two.out.beastOurTree_two,seq_gen.out.range,nu_hmm,mix_prob)
-    
-    
-    
-    
-    mergeTreeFiles(convertor_ourTree_four.out.beastHMMTree_four,convertor_ourTree_two.out.beastHMMTree_two,get_raxml_tree.out.myRaxML,convertor_SeqTree.out.beastTree,Gubbins.out.gubbinstree,CFML.out.CFMLtree,seq_gen.out.range,nu_hmm,mix_prob)
-
-    TreeCmp(BaciSim.out.clonaltree,mergeTreeFiles.out.allOtherTrees,seq_gen.out.range,nu_hmm,mix_prob)
-    
-    collectedCMP_tree = TreeCmp.out.Comparison.collectFile(name:"all_cmpTrees.result",storeDir:"/home/nehleh/work/results/Summary_Results", keepHeader:false , sort: false) 
-    
-    TreeCmp_summary(collectedCMP_tree)
+//    Beast_partial_four(phyloHMM_four.out.partial_XML_four,seq_gen.out.range,nu_hmm,mix_prob)
+//    
+//    treeannotator_partial_four(Beast_partial_four.out.beastPartialTree_four,seq_gen.out.range,nu_hmm,mix_prob)
+//    
+//    convertor_ourTree_four(treeannotator_partial_four.out.beastOurTree_four,seq_gen.out.range,nu_hmm,mix_prob)
+//    
+//    
+//    
+//    Beast_partial_two(phyloHMM_two.out.partial_XML_two,seq_gen.out.range,nu_hmm,mix_prob)
+//    
+//    treeannotator_partial_two(Beast_partial_two.out.beastPartialTree_two,seq_gen.out.range,nu_hmm,mix_prob)
+//    
+//    convertor_ourTree_two(treeannotator_partial_two.out.beastOurTree_two,seq_gen.out.range,nu_hmm,mix_prob)
+//    
+//     
+//    
+//    mergeTreeFiles(convertor_ourTree_four.out.beastHMMTree_four,convertor_ourTree_two.out.beastHMMTree_two,get_raxml_tree.out.myRaxML,convertor_SeqTree.out.beastTree,Gubbins.out.gubbinstree,CFML.out.CFMLtree,seq_gen.out.range,nu_hmm,mix_prob)
+//
+//    TreeCmp(BaciSim.out.clonaltree,mergeTreeFiles.out.allOtherTrees,seq_gen.out.range,nu_hmm,mix_prob)
+//    
+//    collectedCMP_tree = TreeCmp.out.Comparison.collectFile(name:"all_cmpTrees.result",storeDir:"/home/nehleh/work/results/Summary_Results", keepHeader:false , sort: false) 
+//    
+//    TreeCmp_summary(collectedCMP_tree)
      
 //    phyloHMM_beast(seq_gen.out.wholegenome,convertor_ourTree.out.beastHMMTree,BaciSim.out.recomlog,CFML.out.CFML_recom,CFML.out.CFMLtree,nu_hmm,seq_gen.out.range)
 

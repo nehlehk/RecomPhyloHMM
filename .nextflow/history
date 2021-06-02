@@ -1,0 +1,21 @@
+2021-04-28 17:02:22	3s	pensive_blackwell	ERR	c4113ea1cdab47efb74b73e184042ee5	c1dc4020-61e7-4ee2-95ca-efa31d0b8de3	nextflow run /home/nehleh/PhyloCode/RecomPhyloHMM/phyloHMM-pipeline.nf
+2021-04-28 17:03:30	2.8s	distracted_easley	ERR	c4113ea1cdab47efb74b73e184042ee5	c765af4a-a53d-40da-a9bc-2dc318e501c8	nextflow run /home/nehleh/PhyloCode/RecomPhyloHMM/phyloHMM-pipeline.nf
+2021-04-28 17:11:33	3.1s	lethal_poisson	ERR	27c929d17003bdaa517e09857c290a86	9829f858-f320-4cc6-8e00-32e9a05d5217	nextflow run phyloHMM-pipeline.nf
+2021-04-28 17:14:41	1m 12s	ecstatic_wing	ERR	27c929d17003bdaa517e09857c290a86	93a57e5e-e32b-4854-b21a-6a37ba8aa72c	nextflow run phyloHMM-pipeline.nf
+2021-04-28 17:25:27	2m 58s	admiring_stallman	OK	27c929d17003bdaa517e09857c290a86	93a57e5e-e32b-4854-b21a-6a37ba8aa72c	nextflow run phyloHMM-pipeline.nf -resume
+2021-04-28 17:53:17	9m 29s	gigantic_shannon	OK	7d8af1deb3d02fbabdc389c5c2f3f973	93a57e5e-e32b-4854-b21a-6a37ba8aa72c	nextflow run phyloHMM-pipeline.nf -resume
+2021-04-28 18:05:57	1m 52s	angry_venter	OK	b3a8a325b53fb0ab2672772a6f32f7b0	4cb88d59-52fb-4b5d-8784-43f634d69b24	nextflow run phyloHMM-pipeline.nf
+2021-04-28 18:13:44	1m 44s	awesome_raman	ERR	575665dd9fbca055d7988c627379624f	aef601c2-df6c-4a95-bb4d-1320c865f7b2	nextflow run phyloHMM-pipeline.nf
+2021-04-28 18:15:58	3.3s	confident_knuth	OK	3e8de980a70d522a4ab2141cf20e2487	aef601c2-df6c-4a95-bb4d-1320c865f7b2	nextflow run phyloHMM-pipeline.nf -resume
+2021-04-28 18:22:58	1m 41s	loving_jones	OK	3e8de980a70d522a4ab2141cf20e2487	66df0a12-e9b7-41d7-b3a2-c1f2188035cd	nextflow run phyloHMM-pipeline.nf
+2021-04-28 18:27:05	8m 24s	exotic_hugle	OK	d927b1831f965a2816cb891780fddc84	38381777-6235-4337-b3d1-b7bd45b90d7c	nextflow run phyloHMM-pipeline.nf
+2021-04-28 18:57:33	36.6s	sharp_boyd	ERR	6871239a3cc7379819d862e2189090ed	1cb7b83f-e68b-4f0a-bc1c-d9fd04875f69	nextflow run phyloHMM-pipeline.nf
+2021-04-28 19:02:08	12.4s	determined_avogadro	ERR	6871239a3cc7379819d862e2189090ed	1cb7b83f-e68b-4f0a-bc1c-d9fd04875f69	nextflow run phyloHMM-pipeline.nf -resume
+2021-04-28 19:04:27	13.6s	modest_banach	ERR	6871239a3cc7379819d862e2189090ed	1cb7b83f-e68b-4f0a-bc1c-d9fd04875f69	nextflow run phyloHMM-pipeline.nf -resume
+2021-04-28 19:05:57	12m 7s	high_albattani	OK	6871239a3cc7379819d862e2189090ed	a09f73a5-2611-4512-92cb-4ca299740df0	nextflow run phyloHMM-pipeline.nf
+2021-04-28 19:20:12	1m 13s	marvelous_mendel	ERR	79a2bd4926e205ab0da5ffae563c578f	204928ef-e318-4129-8f9a-a68ae7bd48ba	nextflow run phyloHMM-pipeline.nf
+2021-04-28 19:22:16	6h 39m 14s	gigantic_baekeland	ERR	79a2bd4926e205ab0da5ffae563c578f	2eba0632-4b7c-42b1-8039-0f9beb3b5048	nextflow run phyloHMM-pipeline.nf
+2021-04-29 09:42:45	2d 6h 20m 44s	hungry_galileo	OK	5e6acf964dbf7405f02320cf52c023d8	2eba0632-4b7c-42b1-8039-0f9beb3b5048	nextflow run phyloHMM-pipeline.nf -resume
+2021-05-01 16:20:25	4.9s	nasty_venter	ERR	e6f8c2c75e5c9bf950793b5990d6b823	2eba0632-4b7c-42b1-8039-0f9beb3b5048	nextflow run phyloHMM-pipeline.nf -resume
+2021-05-01 16:22:20	4s	kickass_yalow	ERR	016d7941700d1dc3fbc62cf633243ef5	2eba0632-4b7c-42b1-8039-0f9beb3b5048	nextflow run phyloHMM-pipeline.nf -resume
+2021-05-01 16:26:32	40.6s	backstabbing_mendel	ERR	016d7941700d1dc3fbc62cf633243ef5	2eba0632-4b7c-42b1-8039-0f9beb3b5048	nextflow run phyloHMM-pipeline.nf -resume
