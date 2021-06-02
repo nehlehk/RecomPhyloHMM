@@ -23,10 +23,12 @@ def CFML_recombination(CFML_recomLog):
         s = df['Beg'][i]
         e = df['End'][i]
         node = df['Node'][i]
-        # if "NODE_" in str(node):
-        #     node = node[5:]
-        mynode = int(give_taxon_index(tree, node))
-        CFMLData[s:e, mynode] = 1
+        if "NODE_" in str(node):
+            node = node[5:]
+        # mynode = int(give_taxon_index(tree, node))
+        mynode = int(node)
+        if mynode < tips_num:
+            CFMLData[s:e, mynode] = 1
         # CFMLData[s:e,int(node)] = 1
 
     return CFMLData
@@ -59,7 +61,7 @@ def CFML_resultFig(tree,CFMLData):
         # else:
         # if i < tips_num:
         ax.plot(CFMLData[:, i], label=i, color=color[i % 5])
-        ax.legend(bbox_to_anchor=(0.045, 1.5), prop={'size': 10})
+        ax.legend(bbox_to_anchor=(0.045, 1), prop={'size': 10})
         # ax.plot(CFMLData[:, i],label=i, color=color[i % 5])
         # ax.legend(bbox_to_anchor=(0.04, 1.33) ,prop={'size':10} )
         ax.set_frame_on(False)
@@ -137,6 +139,13 @@ def set_index(tree, dna):
 
 
 if __name__ == "__main__":
+
+    # tree_path = '/home/nehleh/work/results/num_5/num_5_RAxML_bestTree.tree'
+    # cfml_path = '/home/nehleh/work/results/num_5/num_5_CFML.importation_status.txt'
+    # cfml_tree = '/home/nehleh/work/results/num_5/num_5_CFML.labelled_tree.newick'
+    # genomefile = '/home/nehleh/work/results/num_5/num_5_wholegenome_5.fasta'
+    # recomLog = '/home/nehleh/work/results/num_5/num_5_BaciSim_Log.txt'
+
     parser = argparse.ArgumentParser(description='''You did not specify any parameters.''')
     parser.add_argument('-t', "--treeFile", type=str, required=True, help='tree')
     parser.add_argument('-a', "--alignmentFile", type=str, required= True , help='fasta file')
@@ -144,6 +153,7 @@ if __name__ == "__main__":
     parser.add_argument('-ct', "--cfmltreefile", type=str, help='cfmltreefile')
     parser.add_argument('-l', "--recomlogFile", type=str, help='recombination log file')
     args = parser.parse_args()
+
 
     tree_path = args.treeFile
     cfml_path = args.cfmlFile

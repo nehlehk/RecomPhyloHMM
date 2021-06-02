@@ -781,7 +781,7 @@ def make_recom_fig(all_data,alignment_len,nodes_number,tips_number,clonal_tree):
       # else:
       # if i < tips_number:
       ax.plot(output[:,i] ,label= i ,color = color[i%5])
-      ax.legend( bbox_to_anchor=(0.045, 1.5) ,prop={'size':10} )
+      ax.legend( bbox_to_anchor=(0.045, 1) ,prop={'size':10} )
       ax.set_frame_on(False)
       ax.axis('off')
 

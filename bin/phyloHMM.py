@@ -646,7 +646,7 @@ def recom_resultFig(tree,tipdata,threshold,internalNode):
         # else:
         # if i < tips_num:
         ax.plot(output[:, i], label=give_taxon(clonaltree, i), color=color[i % 5])
-        ax.legend(bbox_to_anchor=(0.045, 1.5), prop={'size': 10})
+        ax.legend(bbox_to_anchor=(0.045, 1), prop={'size': 10})
         ax.set_frame_on(False)
         ax.axis('off')
 
