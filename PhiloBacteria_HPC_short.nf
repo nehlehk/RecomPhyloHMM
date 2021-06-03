@@ -1,7 +1,7 @@
 nextflow.enable.dsl = 2
 
 
-params.genomeSize = '100000'
+params.genomeSize = '1000'
 params.recom_len = '600'
 params.recom_rate = '0.005'
 params.tMRCA = '0.01'
@@ -11,12 +11,12 @@ params.out =  "${PWD}/short_philobacteria"
 
 
 
-genome = Channel.value(30)
+genome = Channel.value(10)
 frequencies = Channel.value(' 0.2184,0.2606,0.3265,0.1946' )
 rates =  Channel.value('0.975070 ,4.088451 ,0.991465 ,0.640018 ,3.840919 ,1')
 nu_hmm = Channel.of(0.03)
 mix_prob = Channel.of(0.9)
-repeat_range = Channel.value(1..30)
+repeat_range = Channel.value(1..1)
 
 
 
@@ -297,10 +297,10 @@ process phyloHMM_two {
 
 
      output:
-        path 'RecomPartial.xml' , emit: partial_XML_two
-        path 'rmse_phylohmm.csv' , emit : rmse_phylohmm_two 
-        path 'PhyloHMM_Recombination_2S.jpeg' , emit: phyloHMMFig_two
-        path 'Recom_phyloHMM_Log.txt' , emit: phyloHMMLog_two
+        path 'RecomPartial_two.xml' , emit: partial_XML_two
+        path 'rmse_phylohmm_two.csv' , emit : rmse_phylohmm_two 
+        path 'PhyloHMM_Recombination_two.jpeg' , emit: phyloHMMFig_two
+        path 'Recom_phyloHMM_Log_two.txt' , emit: phyloHMMLog_two
         val nu_hmm , emit: my_nu
         val mix_prob , emit: prob
         
@@ -333,10 +333,10 @@ process phyloHMM_four {
 
 
      output:
-        path 'RecomPartial.xml' , emit: partial_XML_four 
-        path 'rmse_phylohmm.csv' , emit : rmse_phylohmm_four
-        path 'PhyloHMM_Recombination.jpeg' , emit: phyloHMMFig_four
-        path 'Recom_phyloHMM_Log.txt' , emit: phyloHMMLog_four
+        path 'RecomPartial_four.xml' , emit: partial_XML_four 
+        path 'rmse_phylohmm_four.csv' , emit : rmse_phylohmm_four
+        path 'PhyloHMM_Recombination_four.jpeg' , emit: phyloHMMFig_four
+        path 'Recom_phyloHMM_Log_four.txt' , emit: phyloHMMLog_four
         val nu_hmm , emit: my_nu
         val mix_prob , emit: prob
         

@@ -507,7 +507,7 @@ def recom_resultFig(tree,tipdata,threshold,internalNode):
 
     ax.axis('on')
     ax.set_yticklabels([])
-    plt.savefig("PhyloHMM_Recombination_2S.jpeg")
+    plt.savefig("PhyloHMM_Recombination_two.jpeg")
 
     return output
 # **********************************************************************************************************************
@@ -548,7 +548,7 @@ def make_beast_xml_partial(tipdata,tree,xml_path):
         data.insert(i,c)
         c.tail = "\n"
 
-    my_xml.write('RecomPartial.xml' ,encoding="utf-8", xml_declaration=True)
+    my_xml.write('RecomPartial_two.xml' ,encoding="utf-8", xml_declaration=True)
 # **********************************************************************************************************************
 def make_beast_xml_original(tree,xml_path):
     my_xml = ET.parse(xml_path)
@@ -658,7 +658,7 @@ def comparison_plot(RealData,predictionData):
         plt.savefig("taxa" + str(i) + ".jpeg")
 # **********************************************************************************************************************
 def write_rmse_phylohmm(nu,mixtureProb,rmse_real_phylohmm):
-    with open('rmse_phylohmm.csv', mode='w') as rmse_file:
+    with open('rmse_phylohmm_two.csv', mode='w') as rmse_file:
         rmse_writer = csv.writer(rmse_file, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         rmse_writer.writerow([nu,mixtureProb,rmse_real_phylohmm])
 # **********************************************************************************************************************
@@ -757,7 +757,7 @@ def phyloHMM_Log(tree,data):
     all_data = {'nodes':nodes , 'start':starts , 'end':ends, 'len':recomlens }
     df = pd.DataFrame(all_data)
     df = df.sort_values(by=['nodes'], ascending=[True])
-    df.to_csv('Recom_phyloHMM_Log.txt', sep='\t', header=True , index = False)
+    df.to_csv('Recom_phyloHMM_Log_two.txt', sep='\t', header=True , index = False)
 
     return df
 # **********************************************************************************************************************

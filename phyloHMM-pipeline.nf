@@ -260,10 +260,10 @@ process phyloHMM_two {
 
 
      output:
-        path 'RecomPartial.xml' , emit: partial_XML_two
-        path 'rmse_phylohmm.csv' , emit : rmse_phylohmm_two 
-        path 'PhyloHMM_Recombination_2S.jpeg' , emit: phyloHMMFig_two
-        path 'Recom_phyloHMM_Log.txt' , emit: phyloHMMLog_two
+        path 'RecomPartial_two.xml' , emit: partial_XML_two
+        path 'rmse_phylohmm_two.csv' , emit : rmse_phylohmm_two 
+        path 'PhyloHMM_Recombination_two.jpeg' , emit: phyloHMMFig_two
+        path 'Recom_phyloHMM_Log_two.txt' , emit: phyloHMMLog_two
         val nu_hmm , emit: my_nu
         val mix_prob , emit: prob
         
@@ -292,10 +292,10 @@ process phyloHMM_four {
 
 
      output:
-        path 'RecomPartial.xml' , emit: partial_XML_four 
-        path 'rmse_phylohmm.csv' , emit : rmse_phylohmm_four
-        path 'PhyloHMM_Recombination.jpeg' , emit: phyloHMMFig_four
-        path 'Recom_phyloHMM_Log.txt' , emit: phyloHMMLog_four
+        path 'RecomPartial_four.xml' , emit: partial_XML_four 
+        path 'rmse_phylohmm_four.csv' , emit : rmse_phylohmm_four
+        path 'PhyloHMM_Recombination_four.jpeg' , emit: phyloHMMFig_four
+        path 'Recom_phyloHMM_Log_four.txt' , emit: phyloHMMLog_four
         val nu_hmm , emit: my_nu
         val mix_prob , emit: prob
         

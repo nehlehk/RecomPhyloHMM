@@ -10,8 +10,8 @@ tree_path = args.treeFile
 outputtree = args.outputtree
 
 
-tree_path = '/home/nehleh/PhyloCode/Result/10nodes-20sample-len10000/short_philobacteria/num_1/num_1_beastSeqTree.nexus'
-outputtree = '/home/nehleh/PhyloCode/Result/10nodes-20sample-len10000/short_philobacteria/num_1/TEST_beastSeqTree.newick'
+# tree_path = '/home/nehleh/PhyloCode/Result/10nodes-20sample-len10000/short_philobacteria/num_1/num_1_beastSeqTree.nexus'
+# outputtree = '/home/nehleh/PhyloCode/Result/10nodes-20sample-len10000/short_philobacteria/num_1/TEST_beastSeqTree.newick'
 
 tree = dendropy.Tree.get_from_path(tree_path, 'nexus')
 tree.write(path = outputtree, schema="newick")
