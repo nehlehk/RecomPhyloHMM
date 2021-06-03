@@ -1,7 +1,7 @@
 nextflow.enable.dsl = 2
 
 
-params.genomeSize = '10000'
+params.genomeSize = '100000'
 params.recom_len = '600'
 params.recom_rate = '0.005'
 params.tMRCA = '0.01'
@@ -11,12 +11,12 @@ params.out =  "${PWD}/short_philobacteria"
 
 
 
-genome = Channel.value(10)
+genome = Channel.value(30)
 frequencies = Channel.value(' 0.2184,0.2606,0.3265,0.1946' )
 rates =  Channel.value('0.975070 ,4.088451 ,0.991465 ,0.640018 ,3.840919 ,1')
 nu_hmm = Channel.of(0.03)
 mix_prob = Channel.of(0.9)
-repeat_range = Channel.value(1..20)
+repeat_range = Channel.value(1..30)
 
 
 

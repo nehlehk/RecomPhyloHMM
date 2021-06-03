@@ -1,8 +1,8 @@
 nextflow.enable.dsl = 2
 
 
-params.genomeSize = '5000'
-params.recom_len = '600'
+params.genomeSize = '500'
+params.recom_len = '100'
 params.recom_rate = '0.005'
 params.tMRCA = '0.01'
 params.nu_sim = '0.2'
@@ -15,7 +15,7 @@ frequencies = Channel.value(' 0.2184,0.2606,0.3265,0.1946' )
 rates =  Channel.value('0.975070 ,4.088451 ,0.991465 ,0.640018 ,3.840919 ,1')
 nu_hmm = Channel.of(0.03)
 mix_prob = Channel.of(0.9)
-repeat_range = Channel.value(1..5)
+repeat_range = Channel.value(1..1)
 
 
 
@@ -573,13 +573,13 @@ process TreeCmp_summary {
 
 workflow {
 
-    BaciSim(genome,repeat_range)
+   BaciSim(genome,repeat_range)
     
-    seq_gen(BaciSim.out.BaciSimtrees,frequencies,rates)
+   seq_gen(BaciSim.out.BaciSimtrees,frequencies,rates)
     
-    // Gubbins(seq_gen.out.wholegenome,seq_gen.out.range)
+   Gubbins(seq_gen.out.wholegenome,seq_gen.out.range)
 
-    get_raxml_tree(seq_gen.out.wholegenome,seq_gen.out.range)
+   get_raxml_tree(seq_gen.out.wholegenome,seq_gen.out.range)
 
    CFML(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,seq_gen.out.range)
 
@@ -600,36 +600,36 @@ workflow {
   //  RMSE_summary(collectedRMSE_HMM_four,collectedRMSE_CFML)
 
     
-    // make_xml_seq(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,seq_gen.out.range)
+   make_xml_seq(seq_gen.out.wholegenome,get_raxml_tree.out.myRaxML,seq_gen.out.range)
     
-    // Beast_alignment(make_xml_seq.out.original_XML,seq_gen.out.range)
+   Beast_alignment(make_xml_seq.out.original_XML,seq_gen.out.range)
     
-    // treeannotator_alignment(Beast_alignment.out.beastSeqTree,seq_gen.out.range)
+   treeannotator_alignment(Beast_alignment.out.beastSeqTree,seq_gen.out.range)
 
-    // convertor_SeqTree(treeannotator_alignment.out.SeqTree,seq_gen.out.range)  
+   convertor_SeqTree(treeannotator_alignment.out.SeqTree,seq_gen.out.range)   
    
      
-//    Beast_partial_four(phyloHMM_four.out.partial_XML_four,seq_gen.out.range,nu_hmm,mix_prob)
-//    
-//    treeannotator_partial_four(Beast_partial_four.out.beastPartialTree_four,seq_gen.out.range,nu_hmm,mix_prob)
-//    
-//    convertor_ourTree_four(treeannotator_partial_four.out.beastOurTree_four,seq_gen.out.range,nu_hmm,mix_prob)
-//    
-//    
-//    
-//    Beast_partial_two(phyloHMM_two.out.partial_XML_two,seq_gen.out.range,nu_hmm,mix_prob)
-//    
-//    treeannotator_partial_two(Beast_partial_two.out.beastPartialTree_two,seq_gen.out.range,nu_hmm,mix_prob)
-//    
-//    convertor_ourTree_two(treeannotator_partial_two.out.beastOurTree_two,seq_gen.out.range,nu_hmm,mix_prob)
-//    
-//     
-//    
-//    mergeTreeFiles(convertor_ourTree_four.out.beastHMMTree_four,convertor_ourTree_two.out.beastHMMTree_two,get_raxml_tree.out.myRaxML,convertor_SeqTree.out.beastTree,Gubbins.out.gubbinstree,CFML.out.CFMLtree,seq_gen.out.range,nu_hmm,mix_prob)
-//
-//    TreeCmp(BaciSim.out.clonaltree,mergeTreeFiles.out.allOtherTrees,seq_gen.out.range,nu_hmm,mix_prob)
-//    
-//    collectedCMP_tree = TreeCmp.out.Comparison.collectFile(name:"all_cmpTrees.result",storeDir:"/home/nehleh/work/results/Summary_Results", keepHeader:false , sort: false) 
+   Beast_partial_four(phyloHMM_four.out.partial_XML_four,seq_gen.out.range,nu_hmm,mix_prob)
+   
+   treeannotator_partial_four(Beast_partial_four.out.beastPartialTree_four,seq_gen.out.range,nu_hmm,mix_prob)
+   
+   convertor_ourTree_four(treeannotator_partial_four.out.beastOurTree_four,seq_gen.out.range,nu_hmm,mix_prob)
+   
+   
+   
+   Beast_partial_two(phyloHMM_two.out.partial_XML_two,seq_gen.out.range,nu_hmm,mix_prob)
+   
+   treeannotator_partial_two(Beast_partial_two.out.beastPartialTree_two,seq_gen.out.range,nu_hmm,mix_prob)
+   
+   convertor_ourTree_two(treeannotator_partial_two.out.beastOurTree_two,seq_gen.out.range,nu_hmm,mix_prob)
+   
+    
+   
+   mergeTreeFiles(convertor_ourTree_four.out.beastHMMTree_four,convertor_ourTree_two.out.beastHMMTree_two,get_raxml_tree.out.myRaxML,convertor_SeqTree.out.beastTree,Gubbins.out.gubbinstree,CFML.out.CFMLtree,seq_gen.out.range,nu_hmm,mix_prob)
+
+   TreeCmp(BaciSim.out.clonaltree,mergeTreeFiles.out.allOtherTrees,seq_gen.out.range,nu_hmm,mix_prob)
+   
+   collectedCMP_tree = TreeCmp.out.Comparison.collectFile(name:"all_cmpTrees.result",storeDir:"/home/nehleh/work/results/Summary_Results", keepHeader:false , sort: false) 
 //    
 //    TreeCmp_summary(collectedCMP_tree)
      

@@ -85,7 +85,10 @@ def real_recombination(recomLog):
         nodes = nodes_separation(recom['nodes'][i])
         # print(nodes)
         for i in range(len(nodes)):
-            mynode = int(give_taxon_index(tree, nodes[i]))
+            # mynode = int(give_taxon_index(tree, nodes[i]))
+            # print(mynode)
+            mynode = int(nodes[i])
+            # print(mynode)
             realData[s:t, mynode] = 1
 
     return realData
@@ -136,15 +139,13 @@ def set_index(tree, dna):
                     node.label = str(node.index)
                     break
 # **********************************************************************************************************************
-
-
 if __name__ == "__main__":
 
-    # tree_path = '/home/nehleh/work/results/num_5/num_5_RAxML_bestTree.tree'
-    # cfml_path = '/home/nehleh/work/results/num_5/num_5_CFML.importation_status.txt'
-    # cfml_tree = '/home/nehleh/work/results/num_5/num_5_CFML.labelled_tree.newick'
-    # genomefile = '/home/nehleh/work/results/num_5/num_5_wholegenome_5.fasta'
-    # recomLog = '/home/nehleh/work/results/num_5/num_5_BaciSim_Log.txt'
+    # tree_path = '/home/nehleh/work/results/num_4/num_4_RAxML_bestTree.tree'
+    # cfml_path = '/home/nehleh/work/results/num_4/num_4_CFML.importation_status.txt'
+    # cfml_tree = '/home/nehleh/work/results/num_4/num_4_CFML.labelled_tree.newick'
+    # genomefile = '/home/nehleh/work/results/num_4/num_4_wholegenome_4.fasta'
+    # recomLog = '/home/nehleh/work/results/num_4/num_4_BaciSim_Log.txt'
 
     parser = argparse.ArgumentParser(description='''You did not specify any parameters.''')
     parser.add_argument('-t', "--treeFile", type=str, required=True, help='tree')
@@ -172,9 +173,12 @@ if __name__ == "__main__":
     set_index(tree, alignment)
 
     CFMLData = CFML_recombination(cfml_path)
+    # print(CFMLData[1950:1970,6])
     realData = real_recombination(recomLog)
+    # print(realData[1950:1970,6])
     CFML_resultFig(cfml_tree, CFMLData)
 
     rmse_real_CFML = mean_squared_error(realData, CFMLData, squared=False)
+    # print(rmse_real_CFML)
 
     write_rmse_CFML(rmse_real_CFML)

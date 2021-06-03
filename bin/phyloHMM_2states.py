@@ -601,6 +601,9 @@ def real_recombination(recomLog):
         # print(nodes)
         for i in range(len(nodes)):
             mynode = int(give_taxon_index(tree, nodes[i]))
+            # print(mynode)
+            # mynode = int(nodes[i])
+            # # print(mynode)
             realData[s:t, mynode] = 1
 
     return realData

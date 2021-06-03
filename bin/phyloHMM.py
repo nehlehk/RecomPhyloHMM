@@ -746,6 +746,9 @@ def real_recombination(recomLog):
         # print(nodes)
         for i in range(len(nodes)):
             mynode = int(give_taxon_index(tree, nodes[i]))
+            # print(mynode)
+            # mynode = int(nodes[i])
+            # print(mynode)
             realData[s:t, mynode] = 1
 
     return realData
@@ -905,10 +908,9 @@ def phyloHMM_Log(tree,data):
 # **********************************************************************************************************************
 if __name__ == "__main__":
 
-    # tree_path = '/home/nehleh/PhyloCode/Data/num_9/num_9_RAxML_bestTree.tree'
-    # tree = Tree.get_from_path(tree_path, 'newick')
-    # alignment = dendropy.DnaCharacterMatrix.get(file=open("/home/nehleh/PhyloCode/Data/num_9/num_9_wholegenome_9.fasta"),schema="fasta")
-    # recomLog = '/home/nehleh/PhyloCode/Data/num_9/num_9_BaciSim_Log.txt'
+    # tree_path = '/home/nehleh/work/results/num_1/num_1_RAxML_bestTree.tree'
+    # recomLog = '/home/nehleh/work/results/num_1/num_1_BaciSim_Log.txt'
+    # genomefile = '/home/nehleh/work/results/num_1/num_1_wholegenome_1.fasta'
 
     parser = argparse.ArgumentParser(description='''You did not specify any parameters.''')
     parser.add_argument('-t', "--treeFile", type=str, required= True, help='tree')
@@ -988,12 +990,20 @@ if __name__ == "__main__":
 
     if status:
         realData = real_recombination(recomLog)
+        # print(realData[500:520,2])
+        # print(realData[1500:1520,4])
+
         phyloHMMData = predict_recombination(tipdata,mixtureProb,internalNode)
+        # print(phyloHMMData[500:520,2])
+        # print(phyloHMMData[1500:1520,4])
+
         clonalData = np.zeros((alignment_len, tips_num))
         # CFMLData = CFML_recombination(cfml_path)
         # CFML_resultFig(cfml_tree, CFMLData)
 
         rmse_real_phyloHMM= mean_squared_error(realData,phyloHMMData,squared=False)
+        # print(rmse_real_phyloHMM)
+
         # rmse_real_CFML = mean_squared_error(realData,CFMLData, squared=False)
         # print(rmse_real_CFML)
 
