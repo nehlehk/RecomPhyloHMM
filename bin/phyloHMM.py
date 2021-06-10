@@ -474,7 +474,7 @@ def phylohmm(tree,alignment,nu,p_start,p_trans,threshold):
     internalNode = []
     internalPos = []
     for id_tree, target_node in enumerate(tree.postorder_internal_node_iter(exclude_seed_node=True)):
-        # print(target_node.index)
+        print(target_node.index)
         recombination_trees = []
         child_order = []
         mytree.append(Tree.get_from_path(tree_path, 'newick'))
@@ -654,7 +654,7 @@ def recom_resultFig(tree,tipdata,threshold,internalNode):
 
     ax.axis('on')
     ax.set_yticklabels([])
-    plt.savefig("PhyloHMM_Recombination.jpeg")
+    plt.savefig("PhyloHMM_Recombination_four.jpeg")
 
     return output
 # **********************************************************************************************************************
@@ -676,7 +676,7 @@ def internal_plot(posterior,hiddenStates,score):
         ax2.plot(poster[:, 3], label="Recombination C ")
         ax2.set_ylabel("posterior probability for each state")
         ax2.legend(loc=1, bbox_to_anchor=(1.13, 1.1))
-        plt.savefig("posterior"+str(i)+".jpeg")
+        plt.savefig("posterior_four"+str(i)+".jpeg")
 # **********************************************************************************************************************
 def make_beast_xml_partial(tipdata,tree,xml_path):
     my_tipdata = tipdata.transpose(1, 0, 2)
@@ -695,7 +695,7 @@ def make_beast_xml_partial(tipdata,tree,xml_path):
         data.insert(i,c)
         c.tail = "\n"
 
-    my_xml.write('RecomPartial.xml' ,encoding="utf-8", xml_declaration=True)
+    my_xml.write('RecomPartial_four.xml' ,encoding="utf-8", xml_declaration=True)
 # **********************************************************************************************************************
 def make_beast_xml_original(tree,xml_path):
     my_xml = ET.parse(xml_path)
@@ -800,7 +800,7 @@ def comparison_plot(RealData,predictionData):
         plt.savefig("taxa" + str(i) + ".jpeg")
 # **********************************************************************************************************************
 def write_rmse_phylohmm(nu,mixtureProb,rmse_real_phylohmm):
-    with open('rmse_phylohmm.csv', mode='w') as rmse_file:
+    with open('rmse_phylohmm_four.csv', mode='w') as rmse_file:
         rmse_writer = csv.writer(rmse_file, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         rmse_writer.writerow([nu,mixtureProb,rmse_real_phylohmm])
 # **********************************************************************************************************************
@@ -899,27 +899,26 @@ def phyloHMM_Log(tree,data):
     all_data = {'nodes':nodes , 'start':starts , 'end':ends, 'len':recomlens }
     df = pd.DataFrame(all_data)
     df = df.sort_values(by=['nodes'], ascending=[True])
-    df.to_csv('Recom_phyloHMM_Log.txt', sep='\t', header=True , index = False)
+    df.to_csv('Recom_phyloHMM_Log_four.txt', sep='\t', header=True , index = False)
 
     return df
 # **********************************************************************************************************************
 if __name__ == "__main__":
 
-    # tree_path = '/home/nehleh/PhyloCode/Data/num_9/num_9_RAxML_bestTree.tree'
-    # tree = Tree.get_from_path(tree_path, 'newick')
-    # alignment = dendropy.DnaCharacterMatrix.get(file=open("/home/nehleh/PhyloCode/Data/num_9/num_9_wholegenome_9.fasta"),schema="fasta")
-    # recomLog = '/home/nehleh/PhyloCode/Data/num_9/num_9_BaciSim_Log.txt'
+    tree_path = '/home/nehleh/work/results/num_4/num_4_RAxML_bestTree.tree'
+    recomLog = '/home/nehleh/work/results/num_4/num_4_BaciSim_Log.txt'
+    genomefile = '/home/nehleh/work/results/num_4/num_4_wholegenome_4.fasta'
 
     parser = argparse.ArgumentParser(description='''You did not specify any parameters.''')
-    parser.add_argument('-t', "--treeFile", type=str, required= True, help='tree')
-    parser.add_argument('-a', "--alignmentFile", type=str, required= True , help='fasta file')
-    parser.add_argument('-l', "--recomlogFile", type=str, help='recombination log file')
+    # parser.add_argument('-t', "--treeFile", type=str, required= True, help='RAXMLtree')
+    # parser.add_argument('-a', "--alignmentFile", type=str, required= True , help='fasta file')
+    # parser.add_argument('-l', "--recomlogFile", type=str, help='recombination log file')
     parser.add_argument('-nu', "--nuHmm", type=float, default=0.03, help='nuHmm')
     parser.add_argument('-p', "--mixtureProb", type=float, default=0.7, help='mixtureProb')
     parser.add_argument('-f', "--frequencies", type=list, default=[0.2184, 0.2606, 0.3265, 0.1946], help='frequencies')
     parser.add_argument('-r', "--rates", type=list, default=[0.975070, 4.088451, 0.991465, 0.640018, 3.840919],
                         help='rates')
-    parser.add_argument('-s', "--startProb", type=list, default=[0.85, 0.05, 0.05, 0.05], help='frequencies')
+    parser.add_argument('-s', "--startProb", type=list, default=[0.85, 0.05, 0.05, 0.05], help='startProb')
     parser.add_argument('-m', "--transmat", type=list,
                         default=[[0.997, 0.001, 0.001, 0.001], [0.001, 0.997, 0.001, 0.001],
                                  [0.001, 0.001, 0.997, 0.001], [0.001, 0.001, 0.001, 0.997]], help='rates')
@@ -929,9 +928,9 @@ if __name__ == "__main__":
     parser.add_argument('-ct', "--cfmltreefile", type=str, help='cfmltreefile')
     args = parser.parse_args()
 
-    tree_path = args.treeFile
-    genomefile = args.alignmentFile
-    recomLog = args.recomlogFile
+    # tree_path = args.treeFile
+    # genomefile = args.alignmentFile
+    # recomLog = args.recomlogFile
     xml_path = args.xmlFile
     pi = args.frequencies
     rates = args.rates
@@ -945,10 +944,6 @@ if __name__ == "__main__":
 
 
     tree = Tree.get_from_path(tree_path, 'newick')
-
-    # cfml_tree = Tree.get_from_path(cfml_tree, 'newick')
-    # set_label(cfml_tree)
-
     alignment = dendropy.DnaCharacterMatrix.get(file=open(genomefile), schema="fasta")
 
 
@@ -968,7 +963,7 @@ if __name__ == "__main__":
                                 [0.001, 0.001, 0.001, 0.997]])
 
 
-    # n_state = 4
+
 
     tipdata,posterior,hiddenStates,score,internalNode,internalPos = phylohmm(tree, alignment, nu , p_start , p_trans, mixtureProb)
     result = internal_recom(internalNode, tips_num)
@@ -983,23 +978,15 @@ if __name__ == "__main__":
     output = recom_resultFig(tree,tipdata,mixtureProb,internalNode)
     phyloHMM_log = phyloHMM_Log(tree, output)
 
-    make_beast_xml_partial(tipdata,tree,xml_path)
-    make_beast_xml_original(tree,xml_path)
+    # make_beast_xml_partial(tipdata,tree,xml_path)
+    # make_beast_xml_original(tree,xml_path)
+    #
+    # if status:
+    #     realData = real_recombination(recomLog)
+    #     phyloHMMData = predict_recombination(tipdata,mixtureProb,internalNode)
+    #     rmse_real_phyloHMM= mean_squared_error(realData,phyloHMMData,squared=False)
+    #     write_rmse_phylohmm(nu,mixtureProb,rmse_real_phyloHMM)
 
-    if status:
-        realData = real_recombination(recomLog)
-        phyloHMMData = predict_recombination(tipdata,mixtureProb,internalNode)
-        clonalData = np.zeros((alignment_len, tips_num))
-        CFMLData = CFML_recombination(cfml_path)
-        # CFML_resultFig(cfml_tree, CFMLData)
-
-        rmse_real_phyloHMM= mean_squared_error(realData,phyloHMMData,squared=False)
-        # rmse_real_CFML = mean_squared_error(realData,CFMLData, squared=False)
-        # print(rmse_real_CFML)
-
-        write_rmse_phylohmm(nu,mixtureProb,rmse_real_phyloHMM)
-        # write_rmse_CFML(rmse_real_CFML)
-        # comparison_plot(realData, phyloHMMData)
 
 
 

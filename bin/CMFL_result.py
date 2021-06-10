@@ -24,7 +24,9 @@ def CFML_recombination(CFML_recomLog):
         node = df['Node'][i]
         if "NODE_" in str(node):
             node = node[5:]
-        mynode = int(give_taxon_index(tree, node))
+            mynode = int(give_taxon_index(tree, node))
+        else:
+            mynode = int(node)
         CFMLData[s:e, mynode] = 1
         # CFMLData[s:e,int(node)] = 1
 
@@ -78,8 +80,11 @@ def real_recombination(recomLog):
         nodes = nodes_separation(recom['nodes'][i])
         # print(nodes)
         for i in range(len(nodes)):
-            mynode = int(give_taxon_index(tree, nodes[i]))
-            realData[s:t, mynode] = 1
+            if int(nodes[i]) < tips_num:
+                realData[s:t, int(nodes[i])] = 1
+            else:
+                mynode = int(give_taxon_index(tree, nodes[i]))
+                realData[s:t, mynode] = 1
 
     return realData
 # **********************************************************************************************************************
@@ -132,6 +137,14 @@ def set_index(tree, dna):
 
 
 if __name__ == "__main__":
+
+    # tree_path = '/home/nehleh/work/results/num_1/num_1_RAxML_bestTree.tree'
+    # cfml_path = '/home/nehleh/work/results/num_1/num_1_CFML.importation_status.txt'
+    # cfml_tree = '/home/nehleh/work/results/num_1/num_1_CFML.labelled_tree.newick'
+    # genomefile = '/home/nehleh/work/results/num_1/num_1_wholegenome_1.fasta'
+    # recomLog = '/home/nehleh/work/results/num_1/num_1_BaciSim_Log.txt'
+
+
     parser = argparse.ArgumentParser(description='''You did not specify any parameters.''')
     parser.add_argument('-t', "--treeFile", type=str, required=True, help='tree')
     parser.add_argument('-a', "--alignmentFile", type=str, required= True , help='fasta file')
@@ -161,5 +174,6 @@ if __name__ == "__main__":
     CFML_resultFig(cfml_tree, CFMLData)
 
     rmse_real_CFML = mean_squared_error(realData, CFMLData, squared=False)
+    # print(rmse_real_CFML)
 
     write_rmse_CFML(rmse_real_CFML)
