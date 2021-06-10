@@ -345,72 +345,34 @@ def phylohmm(tree,alignment,nu,p_start,p_trans,threshold):
 
         # print(X.shape)
         # ----------- Step 2: make recombination trees -----------------------------------------------
-        id = 0
-        temptree = {}
-        recom_child_order = []
-        temptree["tree{}".format(id)] = Tree.get_from_path(tree_path, 'newick')
-        set_index(temptree["tree{}".format(id)], alignment)
+
+        temptree = Tree.get_from_path(tree_path, 'newick')
+        set_index(temptree, alignment)
 
         filter_fn = lambda n: hasattr(n, 'index') and n.index == target_node.index
-        target_node_temp = temptree["tree{}".format(id)].find_node(filter_fn=filter_fn)
-        temptree["tree{}".format(id)].reroot_at_node(target_node_temp, update_bipartitions=False,suppress_unifurcations=True)
-        kids = temptree["tree{}".format(id)].seed_node.child_nodes()
-
-
-        # for k1, kid1 in enumerate(kids):
-        #     child_order.append(kid1.index)
-        #
-        # # print(kids)
-        # def myFunc(e):
-        #     return e.index
-        # r = 1
-        # kids.sort(key=myFunc)
-        # # print(kids)
+        target_node_temp = temptree.find_node(filter_fn=filter_fn)
+        temptree.reroot_at_node(target_node_temp, update_bipartitions=False,suppress_unifurcations=True)
+        kids = temptree.seed_node.child_nodes()
 
         for k1, kid1 in enumerate(kids):
             print(kid1.index)
-            recom_child_order.append(kid1.index)
-            temptree["tree{}".format(id)] = Tree.get_from_path(tree_path, 'newick')
-            set_index(temptree["tree{}".format(id)], alignment)
+            child_order.append(kid1.index)
+            # recom_child_order.append(kid1.index)
+            temptree = Tree.get_from_path(tree_path, 'newick')
+            set_index(temptree, alignment)
             filter_fn = lambda n: hasattr(n, 'index') and n.index == target_node.index
-            target_node_temp = temptree["tree{}".format(id)].find_node(filter_fn=filter_fn)
-            temptree["tree{}".format(id)].reroot_at_node(target_node_temp, update_bipartitions=False,suppress_unifurcations=True)
-            recombination_trees.append(recom_maker(temptree["tree{}".format(id)], kid1.index, nu))
+            target_node_temp = temptree.find_node(filter_fn=filter_fn)
+            temptree.reroot_at_node(target_node_temp, update_bipartitions=False,suppress_unifurcations=True)
+            print(temptree.seed_node.child_nodes())
+            recombination_trees.append(recom_maker(temptree, kid1.index, nu))
 
         print(recombination_trees)
 
-        # temptree = {}
-        # recom_child_order = []
-        # hmm_trees = []
-        #
-        # for id, child in enumerate(target_node.child_node_iter()):  # to keep the order of clonal tree children
-        #     recom_child_order.append(child.index)
-        #
-        # for id, child in enumerate(target_node.child_node_iter()):
-        #     # print(child.index)
-        #     temptree["tree{}".format(id)] = Tree.get_from_path(tree_path, 'newick')
-        #     set_index(temptree["tree{}".format(id)], alignment)
-        #
-        #     filter_fn = lambda n: hasattr(n, 'index') and n.index == target_node.index
-        #     target_node_temp = temptree["tree{}".format(id)].find_node(filter_fn=filter_fn)
-        #     temptree["tree{}".format(id)].reroot_at_node(target_node_temp, update_bipartitions=False,suppress_unifurcations=True)
-        #
-        #     kids = temptree["tree{}".format(id)].seed_node.child_nodes()  # to keep the order of recombination trees children
-        #     for kid in kids:
-        #         recom_child_order.append(kid.index)
-        #
-        #     filter_fn = lambda n: hasattr(n, 'index') and n.index == child.index
-        #     recombined_node = temptree["tree{}".format(id)].find_node(filter_fn=filter_fn)
-        #     # recombination_trees.append(tree_evolver_rerooted(temptree["tree{}".format(id)], recombined_node, nu))
-        #     hmm_trees.append(tree_evolver_rerooted(temptree["tree{}".format(id)], recombined_node, nu))
-        #     child_order.append(recombined_node.index)
-
-
         # ----------- Step 3: Call phyloHMM -----------------------------------------------------
 
-        for h in range(1,4):
-            myEmission = compute_logprob_phylo(X, [recombination_trees[0],recombination_trees[h]], GTR_sample, child_order, recom_child_order)
-            print(myEmission.shape)
+        # for h in range(1,4):
+        #     myEmission = compute_logprob_phylo(X, [recombination_trees[0],recombination_trees[h]], GTR_sample, child_order, recom_child_order)
+        #     print(myEmission.shape)
 
 
             # model = phyloLL_HMM(n_components=2, trees=[recombination_trees[0],hmm_trees[h]], model=GTR_sample, child_order=child_order,recom_child_order=recom_child_order)
