@@ -761,16 +761,15 @@ def phyloHMM_Log(tree,data):
 # **********************************************************************************************************************
 if __name__ == "__main__":
 
-    # tree_path = '/home/nehleh/PhyloCode/Data/num_9/num_9_RAxML_bestTree.tree'
-    # tree = Tree.get_from_path(tree_path, 'newick')
-    # alignment = dendropy.DnaCharacterMatrix.get(file=open("/home/nehleh/PhyloCode/Data/num_9/num_9_wholegenome_9.fasta"),schema="fasta")
-    # recomLog = '/home/nehleh/PhyloCode/Data/num_9/num_9_BaciSim_Log.txt'
+    tree_path = '/home/nehleh/work/results/num_5/num_5_RAxML_bestTree.tree'
+    recomLog = '/home/nehleh/work/results/num_5/num_5_BaciSim_Log.txt'
+    genomefile = '/home/nehleh/work/results/num_5/num_5_wholegenome_5.fasta'
 
 
     parser = argparse.ArgumentParser(description='''You did not specify any parameters.''')
-    parser.add_argument('-t', "--treeFile", type=str, required= True, help='tree')
-    parser.add_argument('-a', "--alignmentFile", type=str, required= True , help='fasta file')
-    parser.add_argument('-l', "--recomlogFile", type=str, help='recombination log file')
+    # parser.add_argument('-t', "--treeFile", type=str, required= True, help='tree')
+    # parser.add_argument('-a', "--alignmentFile", type=str, required= True , help='fasta file')
+    # parser.add_argument('-l', "--recomlogFile", type=str, help='recombination log file')
     parser.add_argument('-nu', "--nuHmm", type=float,default=0.03,help='nuHmm')
     parser.add_argument('-p', "--mixtureProb", type=float, default=0.7, help='mixtureProb')
     parser.add_argument('-f', "--frequencies", type=list, default= [0.2184,0.2606,0.3265,0.1946],help='frequencies')
@@ -783,9 +782,9 @@ if __name__ == "__main__":
     parser.add_argument('-ct', "--cfmltreefile", type=str, help='cfmltreefile')
     args = parser.parse_args()
 
-    tree_path = args.treeFile
-    genomefile = args.alignmentFile
-    recomLog = args.recomlogFile
+    # tree_path = args.treeFile
+    # genomefile = args.alignmentFile
+    # recomLog = args.recomlogFile
     xml_path = args.xmlFile
     pi = args.frequencies
     rates = args.rates
@@ -839,14 +838,14 @@ if __name__ == "__main__":
     output = recom_resultFig(tree,tipdata,mixtureProb,internalNode)
     phyloHMM_log = phyloHMM_Log(tree, output)
 
-    make_beast_xml_partial(tipdata,tree,xml_path)
-    make_beast_xml_original(tree,xml_path)
-
-    if status:
-        realData = real_recombination(recomLog)
-        phyloHMMData = predict_recombination(tipdata,mixtureProb,internalNode)
-        rmse_real_phyloHMM= mean_squared_error(realData,phyloHMMData,squared=False)
-        write_rmse_phylohmm(nu,mixtureProb,rmse_real_phyloHMM)
+    # make_beast_xml_partial(tipdata,tree,xml_path)
+    # make_beast_xml_original(tree,xml_path)
+    #
+    # if status:
+    #     realData = real_recombination(recomLog)
+    #     phyloHMMData = predict_recombination(tipdata,mixtureProb,internalNode)
+    #     rmse_real_phyloHMM= mean_squared_error(realData,phyloHMMData,squared=False)
+    #     write_rmse_phylohmm(nu,mixtureProb,rmse_real_phyloHMM)
 
 
 

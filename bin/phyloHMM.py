@@ -905,9 +905,9 @@ def phyloHMM_Log(tree,data):
 # **********************************************************************************************************************
 if __name__ == "__main__":
 
-    tree_path = '/home/nehleh/work/results/num_4/num_4_RAxML_bestTree.tree'
-    recomLog = '/home/nehleh/work/results/num_4/num_4_BaciSim_Log.txt'
-    genomefile = '/home/nehleh/work/results/num_4/num_4_wholegenome_4.fasta'
+    tree_path = '/home/nehleh/work/results/num_5/num_5_RAxML_bestTree.tree'
+    recomLog = '/home/nehleh/work/results/num_5/num_5_BaciSim_Log.txt'
+    genomefile = '/home/nehleh/work/results/num_5/num_5_wholegenome_5.fasta'
 
     parser = argparse.ArgumentParser(description='''You did not specify any parameters.''')
     # parser.add_argument('-t', "--treeFile", type=str, required= True, help='RAXMLtree')

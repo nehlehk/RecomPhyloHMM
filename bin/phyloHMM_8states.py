@@ -341,11 +341,11 @@ def phylohmm(tree,alignment,nu,p_start,p_trans,threshold):
         # ----------- Step 1 : Make input for hmm ------------------------------------------------------
         # --------------  Stetp 1.1 : re-root the tree based on the target node where the target node is each internal node of the tree.
 
-        filter_fn = lambda n: hasattr(n, 'index') and n.index == target_node.index
-        target_node_t = mytree[id_tree].find_node(filter_fn=filter_fn)
-        mytree[id_tree].reroot_at_node(target_node_t, update_bipartitions=False, suppress_unifurcations=True)
+        # filter_fn = lambda n: hasattr(n, 'index') and n.index == target_node.index
+        # target_node_t = mytree[id_tree].find_node(filter_fn=filter_fn)
+        # mytree[id_tree].reroot_at_node(target_node_t, update_bipartitions=False, suppress_unifurcations=True)
 
-        # mytree[id_tree].reroot_at_node(target_node, update_bipartitions=False, suppress_unifurcations=True)
+        mytree[id_tree].reroot_at_node(target_node, update_bipartitions=False, suppress_unifurcations=True)
         recombination_trees.append(mytree[id_tree].as_string(schema="newick"))
 
         # --------------  Step 1.2: Calculate X based on this re-rooted tree
@@ -374,7 +374,7 @@ def phylohmm(tree,alignment,nu,p_start,p_trans,threshold):
             return e.index
         r = 1
         kids.sort(key=myFunc)
-        print(kids)
+        # print(kids)
         for k1, kid1 in enumerate(kids):
             # print(kid1.index)
             recom_child_order.append(kid1.index)
@@ -400,7 +400,7 @@ def phylohmm(tree,alignment,nu,p_start,p_trans,threshold):
 
         # print(treeorders)
         # print(recombination_trees)
-        # print(child_order)
+        print(child_order)
         # print(recom_child_order)
 
         # ----------- Step 3: Call phyloHMM -----------------------------------------------------
@@ -413,9 +413,11 @@ def phylohmm(tree,alignment,nu,p_start,p_trans,threshold):
 
         p = model.predict_proba(X)
 
+        print(p[800])
         print(p[1500])
-        print(p[2000])
-        print(p[4000])
+        print(p[3200])
+        print(p[3800])
+        print(p[4500])
 
         # mynode, pData = find_internal_recombination(p, child_order, threshold)
         # internalNode.append(mynode)
@@ -564,7 +566,7 @@ def internal_plot(posterior,hiddenStates,score):
         ax2.plot(poster[:, 7], label="Recombination 1,3 ")
         ax2.set_ylabel("posterior probability for each state")
         ax2.legend(loc=1, bbox_to_anchor=(1.13, 1.1))
-        plt.savefig("posterior"+str(i)+".jpeg")
+        plt.savefig("posterior"+str(10+i)+".jpeg")
 # **********************************************************************************************************************
 def make_beast_xml_partial(tipdata,tree,xml_path):
     my_tipdata = tipdata.transpose(1, 0, 2)
@@ -864,16 +866,16 @@ if __name__ == "__main__":
     tipdata,posterior,hiddenStates,score,internalNode,internalPos = phylohmm(tree, alignment, nu , p_start , p_trans, mixtureProb)
 
     # result, dataIndex = internal_recom(internalNode, tips_num)
-    #
+
     # # print(result)
     # # print(dataIndex)
-    #
+
     internal_plot(posterior, hiddenStates, score)
-    #
-    # tree = Tree.get_from_path(tree_path, 'newick')
-    # set_index(tree, alignment)
-    # output = recom_resultFig(tree,tipdata,mixtureProb,internalNode)
-    # phyloHMM_log = phyloHMM_Log(tree, output)
+
+    tree = Tree.get_from_path(tree_path, 'newick')
+    set_index(tree, alignment)
+    output = recom_resultFig(tree,tipdata,mixtureProb,internalNode)
+    phyloHMM_log = phyloHMM_Log(tree, output)
     #
     # make_beast_xml_partial(tipdata,tree,xml_path)
     # # make_beast_xml_original(tree,xml_path)
