@@ -236,13 +236,12 @@ def make_hmm_input_mixture(tree, alignment, tip_partial, model):
     children_count = len(children)
     x = np.zeros((alignment.sequence_size, children_count * 4))
     for id, child in enumerate(children):
-        # print(child.index)
+        print(child.index)
         x[:, (id * 4):((id + 1) * 4)] = partial[:, child.index, :]
     return x
 # **********************************************************************************************************************
 def update_mixture_partial(alignment,tree,node,tipdata,posterior):
   column = get_DNA_fromAlignment(alignment)
-
   for site in range(alignment_len):
     dna = column[site]
     my_number = give_index(dna[node.index])
@@ -331,9 +330,14 @@ def phylohmm(tree,alignment,nu,p_start,p_trans,threshold):
     internalNode = []
     internalPos = []
 
+    r_node = []
+    t_node = []
+
+
     print(tree.as_ascii_plot(show_internal_node_labels=True))
 
     for id_tree, target_node in enumerate(tree.postorder_internal_node_iter(exclude_seed_node=True)):
+      if target_node.index == 10:
         print(target_node.index)
         recombination_trees = []
         recombination_nodes = []
@@ -348,7 +352,11 @@ def phylohmm(tree,alignment,nu,p_start,p_trans,threshold):
         recombination_trees.append(mytree[id_tree].as_string(schema="newick"))
 
         # --------------  Step 1.2: Calculate X based on this re-rooted tree
+
+        print(tipdata[1800])
         X = make_hmm_input_mixture(mytree[id_tree], alignment, tipdata, GTR_sample)
+        print(X[1800])
+
 
         # to keep the order of clonal tree children
         X_child_order = []
@@ -384,8 +392,6 @@ def phylohmm(tree,alignment,nu,p_start,p_trans,threshold):
             # print("tree",str(h))
             # myEmission = compute_logprob_phylo(X, [recombination_trees[0],recombination_trees[h]], GTR_sample, child_order, X_child_order)
             # print(myEmission.shape)
-
-
             model = phyloLL_HMM(n_components=2,trees=[recombination_trees[0],recombination_trees[h]],model=GTR_sample,child_order=child_order,recom_child_order=X_child_order)
             model.startprob_ = p_start
             model.transmat_ = p_trans
@@ -393,35 +399,42 @@ def phylohmm(tree,alignment,nu,p_start,p_trans,threshold):
             p = model.predict_proba(X)
             hidden = model.predict(X)
 
-            # posterior.append(p)
-            # hiddenStates.append(hidden)
-            # score.append(model.score(X))
+            posterior.append(p)
+            hiddenStates.append(hidden)
+            score.append(model.score(X))
 
-            fig = plt.figure(figsize=(10, 5))
-            ax = fig.add_subplot(2, 1, 1)
-            ax.plot(hidden)
-            ax.set_title(str(target_node))
-            ax.set_ylabel("Clonal - Recombination State")
-            ax2 = fig.add_subplot(2, 1, 2)
-            ax2.plot(p[:, 0], label="ClonalFrame")
-            ax2.plot(p[:, 1], label=str(recombination_nodes[h-1]))
-            ax2.set_ylabel("posterior probability for each state")
-            ax2.legend(loc=1, bbox_to_anchor=(1.13, 1.1))
+            r_node.append(recombination_nodes[h-1].index)
+            t_node.append(target_node.index)
+
+            # fig = plt.figure(figsize=(10, 5))
+            # ax = fig.add_subplot(2, 1, 1)
+            # ax.plot(hidden)
+            # ax.set_title(str(target_node))
+            # ax.set_ylabel("Clonal - Recombination State")
+            # ax2 = fig.add_subplot(2, 1, 2)
+            # ax2.plot(p[:, 0], label="ClonalFrame")
+            # ax2.plot(p[:, 1], label=str(recombination_nodes[h-1]))
+            # ax2.set_ylabel("posterior probability for each state")
+            # ax2.legend(loc=1, bbox_to_anchor=(1.13, 1.1))
 
 
-            # tree_updatePartial = Tree.get_from_path(tree_path, 'newick')
-            # set_index(tree_updatePartial, alignment)
-            # filter_fn = lambda n: hasattr(n, 'index') and n.index == recom_child_order[h]
-            # update_child = tree_updatePartial.find_node(filter_fn=filter_fn)
-            # # print(update_child)
-            # if update_child.is_leaf():
-            #     update_mixture_partial(alignment, tree_updatePartial, update_child, tipdata, p)
-            # else:
-            #     mynode, pData  = find_internal_recombination(p,update_child,threshold)
-            #     internalNode.append(mynode)
-            #     internalPos.append(pData)
+            tree_updatePartial = Tree.get_from_path(tree_path, 'newick')
+            set_index(tree_updatePartial, alignment)
+            filter_fn = lambda n: hasattr(n, 'index') and n.index == X_child_order[h-1]
+            update_child = tree_updatePartial.find_node(filter_fn=filter_fn)
+            print("update_child:",update_child)
+            if update_child.is_leaf():
+                update_mixture_partial(alignment, tree_updatePartial, update_child, tipdata, p)
+            # print(tipdata[1800])
+            else:
+                mynode, pData  = find_internal_recombination(p,update_child,threshold)
+                internalNode.append(mynode)
+                internalPos.append(pData)
 
-    return tipdata,posterior,hiddenStates,score,internalNode,internalPos
+
+    recom_prob = pd.DataFrame({'recom_nodes':r_node, 'target_node':t_node,  'posterior':posterior})
+    print(recom_prob)
+    return tipdata,posterior,hiddenStates,score,internalNode,internalPos,recom_prob
 # **********************************************************************************************************************
 def ranges(nums):
     nums = sorted(set(nums))
@@ -502,16 +515,10 @@ def recom_resultFig(tree,tipdata,threshold,internalNode):
     for i in range(alignment_len):
         for j in range(nodes_number):
             if (j < tips_num):
-                if ((my_tipdata[j, i, 0] > threshold) and (my_tipdata[j, i, 0] < 1.0)) or (
-                        (my_tipdata[j, i, 1] > threshold) and (my_tipdata[j, i, 1] < 1.0)):
+                if ((my_tipdata[j, i, 0] > threshold) and (my_tipdata[j, i, 0] < 1.0)) or ((my_tipdata[j, i, 1] > threshold) and (my_tipdata[j, i, 1] < 1.0)):
                     output[i, j] = 1
-            elif (j in recomeNode) and (internalPos[j - tips_num][i] > threshold):
-                output[i, j] = 1
-
-    # for i in range(my_tipdata.shape[1]):
-    #     for j in range(my_tipdata.shape[0]):
-    #         if ((my_tipdata[j, i, 0] > threshold) and (my_tipdata[j, i, 0] < 1.0)) or ((my_tipdata[j, i, 1] > threshold) and (my_tipdata[j, i, 1] < 1.0)):
-    #             output[i, j] = 1
+            # elif (j in recomeNode) and (internalPos[j - tips_num][i] > threshold):
+            #     output[i, j] = 1
 
 
     fig = plt.figure(figsize=(tips_num + 9, tips_num / 2))
@@ -537,6 +544,45 @@ def recom_resultFig(tree,tipdata,threshold,internalNode):
 
     return output
 # **********************************************************************************************************************
+def recom_resultFig_dm(tree,recom_prob,threshold):
+    output = np.zeros((alignment_len, nodes_number))
+    recom_tips = recom_prob.loc[(recom_prob['recom_nodes'] < tips_num )]
+    print(recom_tips)
+    for i in range(10):
+        print(recom_tips['posterior'][i])
+
+    # for i in range(alignment_len):
+    #     for j in range(nodes_number):
+    #         if (j < tips_num):
+    #                 output[i, j] = 1
+    #         # elif (j in recomeNode) and (internalPos[j - tips_num][i] > threshold):
+    #         #     output[i, j] = 1
+    #
+    #
+    # fig = plt.figure(figsize=(tips_num + 9, tips_num / 2))
+    # color = ['red', 'green', 'purple', 'blue', 'black']
+    # clonaltree = Tree.get_from_path(tree_path, 'newick')
+    # set_index(clonaltree, alignment)
+    # for i in range(nodes_number):
+    #     ax = fig.add_subplot(nodes_number, 1, i + 1)
+    #     if i >= tips_num:
+    #         desc = set()
+    #         d = give_descendents(clonaltree, i, desc)
+    #         ax.plot(output[:, i], label=str(i) + ' is mrca:' + str(d), color=color[i % 5])
+    #     else:
+    #         ax.plot(output[:, i], label=give_taxon(clonaltree, i), color=color[i % 5])
+    #     ax.legend(bbox_to_anchor=(0.045, 1.5), prop={'size': 10})
+    #     ax.set_frame_on(False)
+    #     ax.axis('off')
+    #
+    # ax.axis('on')
+    # ax.set_yticklabels([])
+    # plt.savefig("PhyloHMM_Recombination_two.jpeg")
+    # plt.show()
+
+    return output
+# **********************************************************************************************************************
+
 def internal_plot(posterior,hiddenStates,score):
     for i in range(len(posterior)):
         poster = posterior[i]
@@ -794,7 +840,7 @@ if __name__ == "__main__":
     # parser.add_argument('-a', "--alignmentFile", type=str, required= True , help='fasta file')
     # parser.add_argument('-l', "--recomlogFile", type=str, help='recombination log file')
     parser.add_argument('-nu', "--nuHmm", type=float,default=0.03,help='nuHmm')
-    parser.add_argument('-p', "--mixtureProb", type=float, default=0.7, help='mixtureProb')
+    parser.add_argument('-p', "--mixtureProb", type=float, default=0.9, help='mixtureProb')
     parser.add_argument('-f', "--frequencies", type=list, default= [0.2184,0.2606,0.3265,0.1946],help='frequencies')
     parser.add_argument('-r', "--rates", type=list, default= [0.975070 ,4.088451 ,0.991465 ,0.640018 ,3.840919 ], help='rates')
     parser.add_argument('-s', "--startProb", type=list, default= [0.85, 0.05, 0.05, 0.05],help='frequencies')
@@ -845,7 +891,9 @@ if __name__ == "__main__":
 
 
 
-    tipdata,posterior,hiddenStates,score,internalNode,internalPos = phylohmm(tree, alignment, nu , p_start , p_trans, mixtureProb)
+    tipdata,posterior,hiddenStates,score,internalNode,internalPos,recom_prob = phylohmm(tree, alignment, nu , p_start , p_trans, mixtureProb)
+
+
 
     # print(internalNode.shape)
     # print(internalNode)
@@ -854,10 +902,11 @@ if __name__ == "__main__":
 
     # result = internal_recom(internalNode, tips_num)
     # internal_plot(posterior, hiddenStates, score)
-    #
-    #
-    # tree = Tree.get_from_path(tree_path, 'newick')
-    # set_index(tree, alignment)
+
+
+    tree = Tree.get_from_path(tree_path, 'newick')
+    set_index(tree, alignment)
+    recom_resultFig_dm(tree, recom_prob, mixtureProb)
     # output = recom_resultFig(tree,tipdata,mixtureProb,internalNode)
     # phyloHMM_log = phyloHMM_Log(tree, output)
 
