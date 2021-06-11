@@ -8,7 +8,6 @@ from dendropy import Tree, DnaCharacterMatrix
 import dendropy
 import xml.etree.ElementTree as ET
 from sklearn.metrics import mean_squared_error
-import math
 import argparse
 import csv
 import operator
@@ -335,7 +334,7 @@ def phylohmm(tree,alignment,nu,p_start,p_trans,threshold):
 
     for id_tree, target_node in enumerate(tree.postorder_internal_node_iter(exclude_seed_node=True)):
       # if target_node.index == 10:
-        print(target_node.index)
+      #   print(target_node.index)
         recombination_trees = []
         recombination_nodes = []
         child_order = []
@@ -393,18 +392,6 @@ def phylohmm(tree,alignment,nu,p_start,p_trans,threshold):
             r_node.append(recombination_nodes[h-1].index)
             t_node.append(target_node.index)
 
-            # fig = plt.figure(figsize=(10, 5))
-            # ax = fig.add_subplot(2, 1, 1)
-            # ax.plot(hidden)
-            # ax.set_title(str(target_node))
-            # ax.set_ylabel("Clonal - Recombination State")
-            # ax2 = fig.add_subplot(2, 1, 2)
-            # ax2.plot(p[:, 0], label="ClonalFrame")
-            # ax2.plot(p[:, 1], label=str(recombination_nodes[h-1]))
-            # ax2.set_ylabel("posterior probability for each state")
-            # ax2.legend(loc=1, bbox_to_anchor=(1.13, 1.1))
-
-
             tree_updatePartial = Tree.get_from_path(tree_path, 'newick')
             set_index(tree_updatePartial, alignment)
             filter_fn = lambda n: hasattr(n, 'index') and n.index == X_child_order[h-1]
@@ -415,24 +402,7 @@ def phylohmm(tree,alignment,nu,p_start,p_trans,threshold):
 
 
     recom_prob = pd.DataFrame({'recom_nodes':r_node, 'target_node':t_node,  'posterior':posterior})
-    # print(recom_prob)
     return tipdata,posterior,hiddenStates,score,recom_prob,r_node,t_node
-# **********************************************************************************************************************
-def ranges(nums):
-    nums = sorted(set(nums))
-    gaps = [[s, e] for s, e in zip(nums, nums[1:]) if s+1 < e]
-    edges = iter(nums[:1] + sum(gaps, []) + nums[-1:])
-    return list(zip(edges, edges))
-# **********************************************************************************************************************
-def recom_ranges(tipdata,threshold):
-    my_tipdata = tipdata.transpose(1, 0, 2)
-    recom_index = []
-    for i in range(my_tipdata.shape[1]):
-        for j in range(10):
-            if ((my_tipdata[j, i, 0] > threshold) and (my_tipdata[j, i, 0] < 1.0)) or ((my_tipdata[j, i, 1] > threshold) and (my_tipdata[j, i, 1] < 1.0)):
-                recom_index.append(i)
-
-    return ranges(recom_index)
 # **********************************************************************************************************************
 def give_descendents(tree,node_index,result):
   if node_index >= tips_num:
@@ -445,86 +415,6 @@ def give_descendents(tree,node_index,result):
       else:
         result.add(give_taxon(tree,r_node))
   return result
-# **********************************************************************************************************************
-def find_internal_recombination(posterior,child,threshold):
-  pData = np.zeros(alignment_len)
-  mynode = np.zeros(alignment_len)
-  for site in range(alignment_len):
-    if posterior[site,1] > threshold:
-      mynode[site] = child.index
-      pData[site] = 1
-    else:
-      mynode[site] = -1
-
-  return mynode,pData
-# **********************************************************************************************************************
-def internal_recom(internalNode, tips_num):
-    first = []
-    second = []
-    result = []
-    merge = []
-    opp = []
-    internalnum = nodes_number - tips_num -1
-    for i in range(internalnum):
-        temp = np.unique(internalNode[i])
-        one = np.where(temp >= tips_num)
-        for j in range(len(one)):
-            if len(temp[one[j]]) > 0:
-                first.append(i + tips_num)
-                second.append(int(temp[one[j][0]]))
-
-    # print(first)
-    # print(second)
-
-    for i in range(len(first)):
-        merge.append((first[i], second[i]))
-    for i in range(len(merge)):
-      opp.append((merge[i][1],merge[i][0]))
-    for i in range(len(merge)):
-      if not (merge[i] in opp):
-        result.append(merge[i][0])
-      else:
-        if merge[i][0] < merge[i][1]:
-          result.append(merge[i][0])
-
-    return result
-# **********************************************************************************************************************
-def recom_resultFig(tree,tipdata,threshold,internalNode):
-    my_tipdata = tipdata.transpose(1, 0, 2)
-    # output = np.zeros((alignment_len, tips_num))
-    output = np.zeros((alignment_len, nodes_number))
-    recomeNode = internal_recom(internalNode, tips_num)
-    for i in range(alignment_len):
-        for j in range(nodes_number):
-            if (j < tips_num):
-                if ((my_tipdata[j, i, 0] > threshold) and (my_tipdata[j, i, 0] < 1.0)) or ((my_tipdata[j, i, 1] > threshold) and (my_tipdata[j, i, 1] < 1.0)):
-                    output[i, j] = 1
-            # elif (j in recomeNode) and (internalPos[j - tips_num][i] > threshold):
-            #     output[i, j] = 1
-
-
-    fig = plt.figure(figsize=(tips_num + 9, tips_num / 2))
-    color = ['red', 'green', 'purple', 'blue', 'black']
-    clonaltree = Tree.get_from_path(tree_path, 'newick')
-    set_index(clonaltree, alignment)
-    for i in range(nodes_number):
-        ax = fig.add_subplot(nodes_number, 1, i + 1)
-        if i >= tips_num:
-            desc = set()
-            d = give_descendents(clonaltree, i, desc)
-            ax.plot(output[:, i], label=str(i) + ' is mrca:' + str(d), color=color[i % 5])
-        else:
-            ax.plot(output[:, i], label=give_taxon(clonaltree, i), color=color[i % 5])
-        ax.legend(bbox_to_anchor=(0.045, 1.5), prop={'size': 10})
-        ax.set_frame_on(False)
-        ax.axis('off')
-
-    ax.axis('on')
-    ax.set_yticklabels([])
-    plt.savefig("PhyloHMM_Recombination_two.jpeg")
-    # plt.show()
-
-    return output
 # **********************************************************************************************************************
 def recom_resultFig_dm(recom_prob,mixtureProb):
     output = np.zeros((alignment_len, nodes_number))
@@ -657,43 +547,6 @@ def real_recombination(recomLog):
 
     return realData
 # **********************************************************************************************************************
-def predict_recombination_old(tipdata,mixtureProb):
-    predictionData = np.zeros((alignment_len, tips_num))
-    for site in range(alignment_len):
-        for i in range(tips_num):
-            # predictionData[site, i] = max(item for item in tipdata[site, i] if item != 1)
-            # predictionData[site, i] = round(max(item for item in tipdata[site, i] if item != 1))
-            if max(item for item in tipdata[site, i] if item != 1) > mixtureProb :
-                predictionData[site, i] = 1
-            else:
-                predictionData[site, i] = 0
-    return predictionData
-# **********************************************************************************************************************
-def predict_recombination(tipdata,mixtureProb,internalNode):
-    predictionData = np.zeros((alignment_len, nodes_number))
-    recomeNode = internal_recom(internalNode, tips_num)
-    for site in range(alignment_len):
-        for i in range(nodes_number):
-            if i < tips_num:
-                if max(item for item in tipdata[site, i] if item != 1) > mixtureProb:
-                    predictionData[site, i] = 1
-                else:
-                    predictionData[site, i] = 0
-            elif (i in recomeNode) and (internalPos[i - tips_num][site] > mixtureProb):
-                    predictionData[site, i] = 1
-    return predictionData
-# **********************************************************************************************************************
-def calc_rmse(data1,data2):
-    mse = []
-    rmse = []
-    for t in range(tips_num):
-        m = mean_squared_error(data1[:,t], data2[:,t])
-        r = math.sqrt(m)
-        mse.append(m)
-        rmse.append(r)
-
-    return sum(rmse)
-# **********************************************************************************************************************
 def comparison_plot(RealData,predictionData):
     fig = plt.figure(figsize=(15, 25))
 
@@ -710,81 +563,10 @@ def write_rmse_phylohmm(nu,mixtureProb,rmse_real_phylohmm):
         rmse_writer = csv.writer(rmse_file, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         rmse_writer.writerow([nu,mixtureProb,rmse_real_phylohmm])
 # **********************************************************************************************************************
-def write_rmse_CFML(rmse_real_CFML):
-    with open('rmse_CFML.csv', mode='w') as rmse_file:
-        rmse_writer = csv.writer(rmse_file, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-        rmse_writer.writerow([rmse_real_CFML])
-# **********************************************************************************************************************
-def CFML_recombination(CFML_recomLog):
-    CFMLData = np.zeros((alignment_len, nodes_number))
-    df = pd.read_csv(CFML_recomLog, sep='\t', engine='python')
-    # print(df)
-    for i in range(len(df)):
-        s = df['Beg'][i]
-        e = df['End'][i]
-        node = df['Node'][i]
-        if "NODE_" in str(node):
-            node = node[5:]
-        mynode = int(give_taxon_index(tree, node))
-        CFMLData[s:e, mynode] = 1
-        # CFMLData[s:e,int(node)] = 1
-
-    return CFMLData
-# **********************************************************************************************************************
 def set_label(tree):
     for node in tree.postorder_node_iter():
         if node.is_leaf():
             node.label = node.taxon.label
-# **********************************************************************************************************************
-def CFML_resultFig(tree,CFMLData):
-    fig = plt.figure(figsize=(tips_num + 9, tips_num / 2))
-    color = ['red', 'green', 'purple', 'blue', 'black']
-    taxa = CFMLData.shape[1]
-    for i in range(taxa):
-        ax = fig.add_subplot(taxa, 1, i + 1)
-        if i >= tips_num:
-            node_label = str('NODE '+ str(i+1))
-            desc = set()
-            d = give_descendents_CFML(tree, node_label, desc)
-            ax.plot(CFMLData[:, i], label=str(i+1) + ' is mrca:' + str(d), color=color[i % 5])
-        else:
-            ax.plot(CFMLData[:, i], label=i, color=color[i % 5])
-        ax.legend(bbox_to_anchor=(0.045, 1.5), prop={'size': 10})
-        # ax.plot(CFMLData[:, i],label=i, color=color[i % 5])
-        # ax.legend(bbox_to_anchor=(0.04, 1.33) ,prop={'size':10} )
-        ax.set_frame_on(False)
-        ax.axis('off')
-    ax.axis('on')
-    ax.set_yticklabels([])
-    # plt.show()
-    plt.savefig("CFML_Recombination.jpeg")
-# **********************************************************************************************************************
-def give_descendents_CFML(tree,node_label,result):
-    if "NODE" in str(node_label):
-        internal_recom_node = tree.find_node_with_label(node_label)
-        children = internal_recom_node.child_nodes()
-        for n in range(len(children)):
-          r_node= children[n].label
-          if "NODE" in str(r_node):
-            give_descendents_CFML(tree,r_node,result)
-          else:
-            result.add(r_node)
-    return result
-# **********************************************************************************************************************
-def recombination_range(data):
-  r = []
-  idx = []   # result list of tuples
-  ind = 0    # index of first element of each range of zeros or non-zeros
-  for n,i in enumerate(data):
-      if (n+1 == len(data)) or (data[n] != data[n+1]):
-          idx.append((ind,n, data[n]))
-          ind = n+1
-
-  for i in range(len(idx)):
-    if idx[i][2] == 1:
-      r.append(idx[i])
-
-  return r
 # **********************************************************************************************************************
 def phyloHMM_Log(c_tree,output):
     nodes = []
@@ -816,7 +598,7 @@ if __name__ == "__main__":
     tree_path = '/home/nehleh/work/results/num_5/num_5_RAxML_bestTree.tree'
     recomLog = '/home/nehleh/work/results/num_5/num_5_BaciSim_Log.txt'
     genomefile = '/home/nehleh/work/results/num_5/num_5_wholegenome_5.fasta'
-
+    xml_path = '/home/nehleh/PhyloCode/RecomPhyloHMM/bin/GTR_template.xml'
 
     parser = argparse.ArgumentParser(description='''You did not specify any parameters.''')
     # parser.add_argument('-t', "--treeFile", type=str, required= True, help='tree')
@@ -828,28 +610,25 @@ if __name__ == "__main__":
     parser.add_argument('-r', "--rates", type=list, default= [0.975070 ,4.088451 ,0.991465 ,0.640018 ,3.840919 ], help='rates')
     parser.add_argument('-s', "--startProb", type=list, default= [0.85, 0.05, 0.05, 0.05],help='frequencies')
     parser.add_argument('-m', "--transmat", type=list, default= [[0.997, 0.001, 0.001, 0.001],[0.001, 0.997, 0.001, 0.001],[0.001, 0.001, 0.997, 0.001],[0.001, 0.001, 0.001, 0.997]], help='rates')
-    parser.add_argument('-x', "--xmlFile", type=str, help='xmlFile')
-    parser.add_argument('-c', "--cfmlFile", type=str, help='cfmlFile')
+    # parser.add_argument('-x', "--xmlFile", type=str, help='xmlFile')
     parser.add_argument('-st', "--status", type=int, default=1, help='1 for simulated data, 0 is for real dataset')
-    parser.add_argument('-ct', "--cfmltreefile", type=str, help='cfmltreefile')
     args = parser.parse_args()
 
     # tree_path = args.treeFile
     # genomefile = args.alignmentFile
     # recomLog = args.recomlogFile
-    xml_path = args.xmlFile
+    # xml_path = args.xmlFile
     pi = args.frequencies
     rates = args.rates
     nu = args.nuHmm
     p_start = args.startProb
     p_trans = args.transmat
-    cfml_path = args.cfmlFile
     mixtureProb = args.mixtureProb
     status = args.status
 
 
 
-
+    # ============================================ setting parameters ==================================================
     tree = Tree.get_from_path(tree_path, 'newick')
     alignment = dendropy.DnaCharacterMatrix.get(file=open(genomefile), schema="fasta")
     set_index(tree, alignment)
@@ -865,22 +644,24 @@ if __name__ == "__main__":
     p_trans = np.array([[0.997, 0.003],
                         [0.003, 0.997]])
 
+
+    # ============================================= main operation =====================================================
+
     tipdata,posterior,hiddenStates,score,recom_prob,r_node,t_node = phylohmm(tree, alignment, nu , p_start , p_trans, mixtureProb)
 
     c_tree = Tree.get_from_path(tree_path, 'newick')
     set_index(c_tree, alignment)
 
     internal_plot(c_tree,posterior, hiddenStates, score,r_node,t_node)
-    output = recom_resultFig_dm(recom_prob, mixtureProb)
-    phyloHMM_log = phyloHMM_Log(c_tree, output)
+    phyloHMMData = recom_resultFig_dm(recom_prob, mixtureProb)
+    phyloHMM_log = phyloHMM_Log(c_tree, phyloHMMData)
 
-    # make_beast_xml_partial(tipdata,tree,xml_path)
-    # make_beast_xml_original(tree,xml_path)
-    #
-    # if status:
-    #     realData = real_recombination(recomLog)
-    #     phyloHMMData = predict_recombination(tipdata,mixtureProb,internalNode)
-    #     rmse_real_phyloHMM= mean_squared_error(realData,phyloHMMData,squared=False)
-    #     write_rmse_phylohmm(nu,mixtureProb,rmse_real_phyloHMM)
+    # ======================================= providing xml files for beast ============================================
+    make_beast_xml_partial(tipdata,c_tree,xml_path)
+    make_beast_xml_original(c_tree,xml_path)
 
-
+    # ============================================    only for simulated data  =========================================
+    if status:
+        realData = real_recombination(recomLog)
+        rmse_real_phyloHMM= mean_squared_error(realData,phyloHMMData,squared=False)
+        write_rmse_phylohmm(nu,mixtureProb,rmse_real_phyloHMM)
