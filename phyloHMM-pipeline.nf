@@ -2,8 +2,8 @@ nextflow.enable.dsl = 2
 
 
 params.genomeSize = '5000'
-params.recom_len = '500'
-params.recom_rate = '0.01'
+params.recom_len = '700'
+params.recom_rate = '0.02'
 params.tMRCA = '0.01'
 params.nu_sim = '0.2'
 params.xml_file = '/home/nehleh/Documents/GTR_template.xml'
@@ -15,7 +15,7 @@ frequencies = Channel.value(' 0.2184,0.2606,0.3265,0.1946' )
 rates =  Channel.value('0.975070 ,4.088451 ,0.991465 ,0.640018 ,3.840919 ,1')
 nu_hmm = Channel.of(0.03)
 mix_prob = Channel.of(0.9)
-repeat_range = Channel.value(1..10)
+repeat_range = Channel.value(1..20)
 
 
 
