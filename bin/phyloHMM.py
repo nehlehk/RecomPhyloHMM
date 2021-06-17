@@ -771,9 +771,9 @@ def recom_resultFig_dm(recom_prob,mixtureProb):
 
 if __name__ == "__main__":
 
-    tree_path = '/home/nehleh/work/results/num_9/num_9_RAxML_bestTree.tree'
-    recomLog = '/home/nehleh/work/results/num_9/num_9_BaciSim_Log.txt'
-    genomefile = '/home/nehleh/work/results/num_9/num_9_wholegenome_9.fasta'
+    tree_path = '/home/nehleh/Desktop/sisters/2/num_1_RAxML_bestTree.tree'
+    # recomLog = '/home/nehleh/work/results/num_5/num_5_BaciSim_Log.txt'
+    genomefile = '/home/nehleh/Desktop/sisters/2/num_1_wholegenome_1.fasta'
     xml_path = '/home/nehleh/PhyloCode/RecomPhyloHMM/bin/GTR_template.xml'
 
     parser = argparse.ArgumentParser(description='''You did not specify any parameters.''')
@@ -840,14 +840,14 @@ if __name__ == "__main__":
 
     # ======================================= providing xml files for beast ============================================
 
-    make_beast_xml_partial(tipdata,tree,xml_path)
-    make_beast_xml_original(tree,xml_path)
+    # make_beast_xml_partial(tipdata,tree,xml_path)
+    # make_beast_xml_original(tree,xml_path)
 
     # ============================================    only for simulated data  =========================================
-    if status:
-        realData = real_recombination(recomLog)
-        rmse_real_phyloHMM= mean_squared_error(realData,phyloHMMData,squared=False)
-        write_rmse_phylohmm(nu,mixtureProb,rmse_real_phyloHMM)
+    # if status:
+    #     realData = real_recombination(recomLog)
+    #     rmse_real_phyloHMM= mean_squared_error(realData,phyloHMMData,squared=False)
+    #     write_rmse_phylohmm(nu,mixtureProb,rmse_real_phyloHMM)
 
     # plt.show()
 
