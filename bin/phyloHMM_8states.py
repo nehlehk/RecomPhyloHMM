@@ -330,6 +330,13 @@ def phylohmm(tree,alignment,nu,p_start,p_trans,threshold):
     tipdata = set_tips_partial(tree, alignment)
     internalNode = []
     internalPos = []
+
+    r_node = []
+    t_node = []
+    single_posterior = []
+
+    print(tree.as_ascii_plot(show_internal_node_labels=True))
+
     for id_tree, target_node in enumerate(tree.postorder_internal_node_iter(exclude_seed_node=True)):
         print(target_node.index)
      # if target_node.index ==10 :
@@ -400,7 +407,7 @@ def phylohmm(tree,alignment,nu,p_start,p_trans,threshold):
 
         # print(treeorders)
         # print(recombination_trees)
-        print(child_order)
+        # print(child_order)
         # print(recom_child_order)
 
         # ----------- Step 3: Call phyloHMM -----------------------------------------------------
@@ -412,20 +419,59 @@ def phylohmm(tree,alignment,nu,p_start,p_trans,threshold):
         model.transmat_ = p_trans
 
         p = model.predict_proba(X)
+        hidden = model.predict(X)
 
-        print(p[800])
-        print(p[1500])
-        print(p[3200])
-        print(p[3800])
-        print(p[4500])
-
-        # mynode, pData = find_internal_recombination(p, child_order, threshold)
-        # internalNode.append(mynode)
-        # internalPos.append(pData)
-        #
         posterior.append(p)
         hiddenStates.append(model.predict(X))
         score.append(model.score(X))
+
+        fig = plt.figure(figsize=(10, 5))
+        ax = fig.add_subplot(2, 1, 1)
+        ax.plot(hidden)
+        ax.set_title("Node"+str(target_node.index))
+        ax.set_ylabel("Clonal - Recombination State")
+        ax2 = fig.add_subplot(2, 1, 2)
+        ax2.plot(p[:, 0], label="ClonalFrame")
+        ax2.plot(p[:, 1], label="Recombination 1 ")
+        ax2.plot(p[:, 2], label="Recombination 1,2 ")
+        ax2.plot(p[:, 3], label="Recombination 1,2,3 ")
+        ax2.plot(p[:, 4], label="Recombination 2 ")
+        ax2.plot(p[:, 5], label="Recombination 2,3 ")
+        ax2.plot(p[:, 6], label="Recombination 3 ")
+        ax2.plot(p[:, 7], label="Recombination 1,3 ")
+        ax2.set_ylabel("posterior probability for each state")
+        ax2.legend(loc=1, bbox_to_anchor=(1.13, 1.1))
+
+
+        r_node.append(kids[0].index)
+        t_node.append(target_node.index)
+        single_posterior.append(p[:, 1])
+
+        r_node.append([kids[0].index,kids[1].index])
+        t_node.append(target_node.index)
+        single_posterior.append(p[:, 2])
+
+        r_node.append([kids[0].index,kids[1].index,kids[2].index])
+        t_node.append(target_node.index)
+        single_posterior.append(p[:, 3])
+
+        r_node.append(kids[1].index)
+        t_node.append(target_node.index)
+        single_posterior.append(p[:, 4])
+
+        r_node.append([kids[1].index,kids[2].index])
+        t_node.append(target_node.index)
+        single_posterior.append(p[:, 5])
+
+        r_node.append(kids[2].index)
+        t_node.append(target_node.index)
+        single_posterior.append(p[:, 6])
+
+        r_node.append([kids[0].index,kids[2].index])
+        t_node.append(target_node.index)
+        single_posterior.append(p[:, 7])
+
+
 
         tree_updatePartial = Tree.get_from_path(tree_path, 'newick')
         set_index(tree_updatePartial, alignment)
@@ -438,7 +484,8 @@ def phylohmm(tree,alignment,nu,p_start,p_trans,threshold):
                 # print("my beloved child:", child.index , child.taxon , "order:" , order+1)
                 update_mixture_partial(alignment, tree_updatePartial, child, tipdata, p, order + 1)
 
-    return tipdata,posterior,hiddenStates,score,internalNode,internalPos
+    recom_prob = pd.DataFrame({'recom_nodes': r_node, 'target_node': t_node, 'posterior': single_posterior})
+    return tipdata,posterior,hiddenStates,score,internalNode,internalPos,recom_prob
 # **********************************************************************************************************************
 def ranges(nums):
     nums = sorted(set(nums))
@@ -797,9 +844,10 @@ def phyloHMM_Log(tree,data):
 if __name__ == "__main__":
 
 
-    tree_path = '/home/nehleh/work/results/num_5/num_5_RAxML_bestTree.tree'
-    recomLog = '/home/nehleh/work/results/num_5/num_5_BaciSim_Log.txt'
-    genomefile = '/home/nehleh/work/results/num_5/num_5_wholegenome_5.fasta'
+    tree_path = '/home/nehleh/work/results/num_9/num_9_RAxML_bestTree.tree'
+    recomLog = '/home/nehleh/work/results/num_9/num_9_BaciSim_Log.txt'
+    genomefile = '/home/nehleh/work/results/num_9/num_9_wholegenome_9.fasta'
+    xml_path = '/home/nehleh/PhyloCode/RecomPhyloHMM/bin/GTR_template.xml'
 
     parser = argparse.ArgumentParser(description='''You did not specify any parameters.''')
     # parser.add_argument('-t', "--treeFile", type=str, required= True, help='RAXMLtree')
@@ -815,9 +863,8 @@ if __name__ == "__main__":
                         default=[[0.997, 0.001, 0.001, 0.001], [0.001, 0.997, 0.001, 0.001],
                                  [0.001, 0.001, 0.997, 0.001], [0.001, 0.001, 0.001, 0.997]], help='rates')
     parser.add_argument('-x', "--xmlFile", type=str, help='xmlFile')
-    parser.add_argument('-c', "--cfmlFile", type=str, help='cfmlFile')
     parser.add_argument('-st', "--status", type=int, default=1, help='1 for simulated data, 0 is for real dataset')
-    parser.add_argument('-ct', "--cfmltreefile", type=str, help='cfmltreefile')
+
     args = parser.parse_args()
 
     # tree_path = args.treeFile
@@ -829,11 +876,9 @@ if __name__ == "__main__":
     nu = args.nuHmm
     p_start = args.startProb
     p_trans = args.transmat
-    cfml_path = args.cfmlFile
-    # cfml_tree = args.cfmltreefile
     mixtureProb = args.mixtureProb
     status = args.status
-    # cfml_path = '/home/nehleh/CFML.importation_status.txt'
+
 
 
 
@@ -863,19 +908,20 @@ if __name__ == "__main__":
 
 
 
-    tipdata,posterior,hiddenStates,score,internalNode,internalPos = phylohmm(tree, alignment, nu , p_start , p_trans, mixtureProb)
+    tipdata,posterior,hiddenStates,score,internalNode,internalPos,recom_prob = phylohmm(tree, alignment, nu , p_start , p_trans, mixtureProb)
+    print(recom_prob)
 
     # result, dataIndex = internal_recom(internalNode, tips_num)
 
     # # print(result)
     # # print(dataIndex)
 
-    internal_plot(posterior, hiddenStates, score)
-
-    tree = Tree.get_from_path(tree_path, 'newick')
-    set_index(tree, alignment)
-    output = recom_resultFig(tree,tipdata,mixtureProb,internalNode)
-    phyloHMM_log = phyloHMM_Log(tree, output)
+    # internal_plot(posterior, hiddenStates, score)
+    #
+    # tree = Tree.get_from_path(tree_path, 'newick')
+    # set_index(tree, alignment)
+    # output = recom_resultFig(tree,tipdata,mixtureProb,internalNode)
+    # phyloHMM_log = phyloHMM_Log(tree, output)
     #
     # make_beast_xml_partial(tipdata,tree,xml_path)
     # # make_beast_xml_original(tree,xml_path)
