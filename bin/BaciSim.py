@@ -1116,7 +1116,7 @@ if __name__ == "__main__":
     parser.add_argument('-n', "--tips_number", type=int, default=10 , help='Sets the number of isolates (default is 10)')
     parser.add_argument('-g', "--alignment_len", type=int, default=5000 , help='Sets the number and lengths of fragments of genetic material (default is 5000)')
     parser.add_argument('-l', "--recom_len", type=int, default=700, help='Sets the average length of an external recombinant interval, (default is 500)')
-    parser.add_argument('-r', "--recom_rate",type=float, default=0.008, help='Sets the site-specific rate of external (between species) recombination, (default is 0.05)')
+    parser.add_argument('-r', "--recom_rate",type=float, default=0.02, help='Sets the site-specific rate of external (between species) recombination, (default is 0.05)')
     parser.add_argument('-nu',"--nu" ,  type=float, default=0.2, help='nu')
     parser.add_argument('-s',"--status" ,  type=int, default=0, help='0 is just leaves, 1 is for both internal nodes and leaves and 2 is just internal nodes')
     parser.add_argument('-t', "--tMRCA", type=float, default=0.01 ,help='tMRCA')

@@ -739,10 +739,12 @@ def recom_resultFig_dm(recom_prob,mixtureProb):
             for j in range(i+1,len(recom_prob)):
                 if (recom_prob['recom_nodes'][i] == recom_prob['target_node'][j]) and (recom_prob['recom_nodes'][j] == recom_prob['target_node'][i]) :
                   for k in range(alignment_len):
-                    if (recom_prob['posterior'][i][k] < recom_prob['posterior'][j][k]):
-                      recom_prob['posterior'][i][k] = recom_prob['posterior'][j][k]
-                    if (recom_prob['posterior'][i][k] >= mixtureProb):
-                      output[k, recom_prob['target_node'][i]] = 1
+                      if ((recom_prob['posterior'][i][k] >= mixtureProb) and (recom_prob['posterior'][j][k] >= mixtureProb)):
+                          output[k, recom_prob['target_node'][i]] = 1
+                    # if (recom_prob['posterior'][i][k] < recom_prob['posterior'][j][k]):
+                    #   recom_prob['posterior'][i][k] = recom_prob['posterior'][j][k]
+                    # if (recom_prob['posterior'][i][k] >= mixtureProb):
+                    #   output[k, recom_prob['target_node'][i]] = 1
 
     fig = plt.figure(figsize=(tips_num + 9, tips_num / 2))
     color = ['red', 'green', 'purple', 'blue', 'black']
@@ -767,14 +769,12 @@ def recom_resultFig_dm(recom_prob,mixtureProb):
 
     return output
 # **********************************************************************************************************************
-
-
 if __name__ == "__main__":
 
-    tree_path = '/home/nehleh/Desktop/sisters/2/num_1_RAxML_bestTree.tree'
+    tree_path = '/home/nehleh/Desktop/sisters/mutiple_sisters/num_1_RAxML_bestTree.tree'
     # recomLog = '/home/nehleh/work/results/num_5/num_5_BaciSim_Log.txt'
-    genomefile = '/home/nehleh/Desktop/sisters/2/num_1_wholegenome_1.fasta'
-    xml_path = '/home/nehleh/PhyloCode/RecomPhyloHMM/bin/GTR_template.xml'
+    genomefile = '/home/nehleh/Desktop/sisters/mutiple_sisters/num_1_wholegenome_1.fasta'
+    # xml_path = '/home/nehleh/PhyloCode/RecomPhyloHMM/bin/GTR_template.xml'
 
     parser = argparse.ArgumentParser(description='''You did not specify any parameters.''')
     # parser.add_argument('-t', "--treeFile", type=str, required= True, help='RAXMLtree')
@@ -820,11 +820,11 @@ if __name__ == "__main__":
 
     set_index(tree, alignment)
 
-    p_start = np.array([0.85, 0.05, 0.05, 0.05])
-    p_trans = np.array([[0.997, 0.001, 0.001, 0.001],
-                                [0.001, 0.997, 0.001, 0.001],
-                                [0.001, 0.001, 0.997, 0.001],
-                                [0.001, 0.001, 0.001, 0.997]])
+    p_start = np.array([0.97, 0.01, 0.01, 0.01])
+    p_trans = np.array([[0.99997, 0.00001, 0.00001, 0.00001],
+                                [0.00001, 0.99997, 0.00001, 0.00001],
+                                [0.00001, 0.00001, 0.99997, 0.00001],
+                                [0.00001, 0.00001, 0.00001, 0.99997]])
 
 
 

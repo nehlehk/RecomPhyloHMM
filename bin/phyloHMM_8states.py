@@ -12,6 +12,7 @@ import math
 import argparse
 import csv
 import operator
+import itertools
 
 
 
@@ -479,10 +480,27 @@ def recom_resultFig_dm(recom_prob,mixtureProb):
                 if isinstance(r2, int):
                   if (r == recom_prob['target_node'][j]) and (r2 == recom_prob['target_node'][i]) :
                     for k in range(alignment_len):
-                      if (recom_prob['posterior'][i][k] < recom_prob['posterior'][j][k]):
-                        recom_prob['posterior'][i][k] = recom_prob['posterior'][j][k]
-                      if (recom_prob['posterior'][i][k] >= mixtureProb):
-                        output[k, recom_prob['target_node'][i]] = 1
+                      if ((recom_prob['posterior'][i][k] >= mixtureProb) and (recom_prob['posterior'][j][k] >= mixtureProb)):
+                          output[k, recom_prob['target_node'][i]] = 1
+        else:
+            for w in range(len(r)):
+                m_node = int(r[w])
+                if (m_node < tips_num):
+                    for k in range(alignment_len):
+                        if (recom_prob['posterior'][i][k] >= mixtureProb):
+                            output[k, m_node] = 1
+                # else:
+                #   for j in range(i+1,len(recom_prob)):
+                #     r2 = recom_prob['recom_nodes'][j]
+                #     if isinstance(r2, int) and (r2 > tips_num) and (r2 != m_node) :
+                #       if (m_node == recom_prob['target_node'][j]) and (r2 == recom_prob['target_node'][i]) :
+                #         print("m_node:",m_node)
+                #         print("r2:",r2)
+                #         for k in range(alignment_len):
+                #           # if (recom_prob['posterior'][i][k] < recom_prob['posterior'][j][k]):
+                #           #   recom_prob['posterior'][i][k] = recom_prob['posterior'][j][k]
+                #           if (recom_prob['posterior'][i][k] >= mixtureProb):
+                #             output[k, recom_prob['target_node'][i]] = 1
 
 
     fig = plt.figure(figsize=(tips_num + 9, tips_num / 2))
@@ -654,15 +672,36 @@ def set_label(tree):
             node.label = node.taxon.label
 # **********************************************************************************************************************
 def phyloHMM_Log(tree,output):
+    nodes = []
+    starts = []
+    ends = []
+    recomlens = []
 
-    return 0
+    for i in range(output.shape[1]):
+        non_zeros = [[i for i, value in it] for key, it in itertools.groupby(enumerate(output[:, i]), key=operator.itemgetter(1)) if key != 0]
+        for j in range(len(non_zeros)):
+            if i < tips_num:
+                n = give_taxon(c_tree, i)
+            else:
+                n = i
+            nodes.append(n)
+            starts.append(non_zeros[j][0])
+            ends.append(non_zeros[j][len(non_zeros[j]) - 1])
+            recomlens.append(non_zeros[j][len(non_zeros[j]) - 1] - non_zeros[j][0])
+
+    all_data = {'nodes': nodes, 'start': starts, 'end': ends, 'len': recomlens}
+    df = pd.DataFrame(all_data)
+    df = df.sort_values(by=['nodes'], ascending=[True])
+    df.to_csv('Recom_phyloHMM_Log_eight.txt', sep='\t', header=True , index = False)
+
+    return df
 # **********************************************************************************************************************
 
 if __name__ == "__main__":
 
-    tree_path = '/home/nehleh/Desktop/sisters/1/num_1_RAxML_bestTree.tree'
+    tree_path = '/home/nehleh/Desktop/sisters/mutiple_sisters/num_1_RAxML_bestTree.tree'
     # recomLog = '/home/nehleh/work/results/num_5/num_5_BaciSim_Log.txt'
-    genomefile = '/home/nehleh/Desktop/sisters/1/num_1_wholegenome_1.fasta'
+    genomefile = '/home/nehleh/Desktop/sisters/mutiple_sisters/num_1_wholegenome_1.fasta'
     # xml_path = '/home/nehleh/PhyloCode/RecomPhyloHMM/bin/GTR_template.xml'
 
     parser = argparse.ArgumentParser(description='''You did not specify any parameters.''')
@@ -705,15 +744,15 @@ if __name__ == "__main__":
 
     set_index(tree, alignment)
 
-    p_start = np.array([0.79, 0.03, 0.03, 0.03 ,0.03, 0.03, 0.03, 0.03])
-    p_trans = np.array([[0.993, 0.001, 0.001, 0.001,0.001, 0.001, 0.001 ,0.001],
-                        [0.001, 0.993, 0.001, 0.001,0.001, 0.001, 0.001 ,0.001],
-                        [0.001, 0.001, 0.993, 0.001,0.001, 0.001, 0.001 ,0.001],
-                        [0.001, 0.001, 0.001, 0.993,0.001, 0.001, 0.001 ,0.001],
-                        [0.001, 0.001, 0.001, 0.001,0.993, 0.001, 0.001 ,0.001],
-                        [0.001, 0.001, 0.001, 0.001,0.001, 0.993, 0.001 ,0.001],
-                        [0.001, 0.001, 0.001, 0.001,0.001, 0.001, 0.993 ,0.001],
-                        [0.001, 0.001, 0.001, 0.001,0.001, 0.001, 0.001 ,0.993],])
+    p_start = np.array([0.9979, 0.0003, 0.0003, 0.0003, 0.0003, 0.0003, 0.0003, 0.0003])
+    p_trans = np.array([[0.9993, 0.0001, 0.0001, 0.0001, 0.0001, 0.0001, 0.0001, 0.0001],
+                        [0.0001, 0.9993, 0.0001, 0.0001, 0.0001, 0.0001, 0.0001, 0.0001],
+                        [0.0001, 0.0001, 0.9993, 0.0001, 0.0001, 0.0001, 0.0001, 0.0001],
+                        [0.0001, 0.0001, 0.0001, 0.9993, 0.0001, 0.0001, 0.0001, 0.0001],
+                        [0.0001, 0.0001, 0.0001, 0.0001, 0.9993, 0.0001, 0.0001, 0.0001],
+                        [0.0001, 0.0001, 0.0001, 0.0001, 0.0001, 0.9993, 0.0001, 0.0001],
+                        [0.0001, 0.0001, 0.0001, 0.0001, 0.0001, 0.0001, 0.9993, 0.0001],
+                        [0.0001, 0.0001, 0.0001, 0.0001, 0.0001, 0.0001, 0.0001, 0.9993], ])
 
     # ============================================= main operation =====================================================
     tipdata,posterior,hiddenStates,score,recom_prob,r_node,t_node = phylohmm(tree, alignment, nu , p_start , p_trans, mixtureProb)
@@ -723,7 +762,7 @@ if __name__ == "__main__":
 
     internal_plot(c_tree,posterior, hiddenStates, score, r_node)
     phyloHMMData = recom_resultFig_dm(recom_prob, mixtureProb)
-    # phyloHMM_log = phyloHMM_Log(c_tree, phyloHMMData)
+    phyloHMM_log = phyloHMM_Log(c_tree, phyloHMMData)
 
     # ======================================= providing xml files for beast ============================================
 

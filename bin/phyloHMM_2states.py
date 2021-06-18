@@ -333,8 +333,8 @@ def phylohmm(tree,alignment,nu,p_start,p_trans,threshold):
     print(tree.as_ascii_plot(show_internal_node_labels=True))
 
     for id_tree, target_node in enumerate(tree.postorder_internal_node_iter(exclude_seed_node=True)):
-      # if target_node.index == 10:
-      #   print(target_node.index)
+      # if target_node.index < 15:
+        print(target_node.index)
         recombination_trees = []
         recombination_nodes = []
         child_order = []
@@ -366,8 +366,8 @@ def phylohmm(tree,alignment,nu,p_start,p_trans,threshold):
         kids = temptree.seed_node.child_nodes()
 
         for k1, kid1 in enumerate(kids):
-          child_order.append(kid1.index) #keep the order of children after reroot
-          if (kid1.index < tips_num) or (target_node.index < kid1.index):  # to avoid having repeated internal nodes
+            child_order.append(kid1.index) #keep the order of children after reroot
+          # if (kid1.index < tips_num) or (target_node.index < kid1.index):  # to avoid having repeated internal nodes
             temptree = Tree.get_from_path(tree_path, 'newick')
             set_index(temptree, alignment)
             filter_fn = lambda n: hasattr(n, 'index') and n.index == target_node.index
@@ -424,9 +424,18 @@ def recom_resultFig_dm(recom_prob,mixtureProb):
                 if (recom_prob['posterior'][i][j][1] >= mixtureProb):
                     output[j, recom_prob['recom_nodes'][i]] = 1
         else:
-            for j in range(alignment_len):
-                if (recom_prob['posterior'][i][j][1] >= mixtureProb):
-                    output[j, recom_prob['target_node'][i]] = 1
+            # for j in range(alignment_len):
+            #     if (recom_prob['posterior'][i][j][1] >= mixtureProb):
+            #         output[j, recom_prob['target_node'][i]] = 1
+            for j in range(i+1,len(recom_prob)):
+                if (recom_prob['recom_nodes'][i] == recom_prob['target_node'][j]) and (recom_prob['recom_nodes'][j] == recom_prob['target_node'][i]) :
+                  for k in range(alignment_len):
+                      if ((recom_prob['posterior'][i][k][1] >= mixtureProb) and (recom_prob['posterior'][j][k][1] >= mixtureProb)):
+                          output[k, recom_prob['target_node'][i]] = 1
+                        # if (recom_prob['posterior'][i][k] < recom_prob['posterior'][j][k]):
+                        #   recom_prob['posterior'][i][k] = recom_prob['posterior'][j][k]
+                        # if (recom_prob['posterior'][i][k] >= mixtureProb):
+                        #     output[k, recom_prob['target_node'][i]] = 1
 
     fig = plt.figure(figsize=(tips_num + 9, tips_num / 2))
     color = ['red', 'green', 'purple', 'blue', 'black']
@@ -464,13 +473,13 @@ def internal_plot(c_tree,posterior,hiddenStates,score,r_node,t_node):
         ax.set_ylabel("Clonal - Recombination State")
         ax2 = fig.add_subplot(2, 1, 2)
         ax2.plot(poster[:, 0], label="ClonalFrame")
-        ax2.plot(poster[:, 1], label="Node"+str(r_node[i]))
-        ax2.set_ylabel("posterior probability for each state")
-        ax2.legend(loc=1, bbox_to_anchor=(1.13, 1.1))
         if r_node[i] < tips_num:
             label = give_taxon(c_tree, r_node[i])
         else:
             label = r_node[i]
+        ax2.plot(poster[:, 1], label="Node"+str(label))
+        ax2.set_ylabel("posterior probability for each state")
+        ax2.legend(loc=1, bbox_to_anchor=(1.13, 1.1))
         plt.savefig("posterior node"+str(t_node[i])+"_node"+str(label)+".jpeg")
         # plt.show()
 # **********************************************************************************************************************
@@ -595,10 +604,10 @@ def phyloHMM_Log(c_tree,output):
 # **********************************************************************************************************************
 if __name__ == "__main__":
 
-    tree_path = '/home/nehleh/Desktop/sisters/2/num_1_RAxML_bestTree.tree'
+    tree_path = '/home/nehleh/Desktop/sisters/mutiple_sisters/num_1_RAxML_bestTree.tree'
     # recomLog = '/home/nehleh/work/results/num_5/num_5_BaciSim_Log.txt'
-    genomefile = '/home/nehleh/Desktop/sisters/2/num_1_wholegenome_1.fasta'
-    xml_path = '/home/nehleh/PhyloCode/RecomPhyloHMM/bin/GTR_template.xml'
+    genomefile = '/home/nehleh/Desktop/sisters/mutiple_sisters/num_1_wholegenome_1.fasta'
+    # xml_path = '/home/nehleh/PhyloCode/RecomPhyloHMM/bin/GTR_template.xml'
 
     parser = argparse.ArgumentParser(description='''You did not specify any parameters.''')
     # parser.add_argument('-t', "--treeFile", type=str, required= True, help='tree')
@@ -640,9 +649,9 @@ if __name__ == "__main__":
     alignment_len = alignment.sequence_size
     nodes_number = len(tree.nodes())
 
-    p_start = np.array([0.95, 0.05])
-    p_trans = np.array([[0.997, 0.003],
-                        [0.003, 0.997]])
+    p_start = np.array([0.99, 0.01])
+    p_trans = np.array([[0.9999, 0.0001],
+                        [0.0001, 0.9999]])
 
 
     # ============================================= main operation =====================================================
@@ -652,13 +661,15 @@ if __name__ == "__main__":
     c_tree = Tree.get_from_path(tree_path, 'newick')
     set_index(c_tree, alignment)
 
+    print(recom_prob)
+
     internal_plot(c_tree,posterior, hiddenStates, score,r_node,t_node)
     phyloHMMData = recom_resultFig_dm(recom_prob, mixtureProb)
     phyloHMM_log = phyloHMM_Log(c_tree, phyloHMMData)
 
     # ======================================= providing xml files for beast ============================================
-    make_beast_xml_partial(tipdata,c_tree,xml_path)
-    make_beast_xml_original(c_tree,xml_path)
+    # make_beast_xml_partial(tipdata,c_tree,xml_path)
+    # make_beast_xml_original(c_tree,xml_path)
 
     # ============================================    only for simulated data  =========================================
     # if status:
