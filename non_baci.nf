@@ -7,8 +7,8 @@ params.recom_rate = '0.02'
 params.tMRCA = '0.01'
 params.nu_sim = '0.2'
 
-params.BaciSimtrees = '/home/nehleh/Desktop/sisters/mutiple_sisters/BaciSimTrees_e.tree'
-params.recomlog = '/home/nehleh/Desktop/sisters/mutiple_sisters/BaciSim_Log.txt'
+params.BaciSimtrees = '/home/nehleh/Desktop/sisters/new_BaciSim/BaciSimTrees.tree'
+params.recomlog = '/home/nehleh/Desktop/sisters/new_BaciSim/BaciSim_Log.txt'
 
 params.xml_file = '/home/nehleh/Documents/GTR_template.xml'
 params.out = '/home/nehleh/work/results/'

@@ -81,7 +81,16 @@ def ex_recom_maker(tree ,node ,nu ,taxa):
     #*************************************************************************
     return new_tree.as_string(schema="newick")
 # ----------------------------------------------------------------------------------------------------------------------
+def ex_recom_maker_new(tree ,node ,nu ):
+    rand_nu = np.random.normal(nu,0.01)
+    co_recom = rand_nu/2
+    parent = node.parent_node
+    if (node.edge_length is None):
+        node.edge.length = 0
+    node.edge_length = co_recom + node.edge_length
 
+    return tree.as_string(schema="newick")
+# ----------------------------------------------------------------------------------------------------------------------
 
 def sister_recom_maker(tree ,nodes ,nu ,taxa):
     for node in nodes:
@@ -884,7 +893,8 @@ def recom_on_alignment(recom_num,recom_len,alignment_len,clonal_tree,node_labels
           recomlens.append(r_len)
           ends.append(start_pos + r_len)
           recom_node = tree.find_node_with_label(str(int(random_tip)))
-          recom_tree= ex_recom_maker(tree,recom_node,nu_ex,taxa) # make external recombination
+          # recom_tree= ex_recom_maker(tree,recom_node,nu_ex,taxa) # make external recombination
+          recom_tree = ex_recom_maker_new(tree, recom_node, nu_ex)
           my_trees.append(recom_tree)
           starting_falg = True
 
@@ -1115,8 +1125,8 @@ if __name__ == "__main__":
         epilog="""All's well that ends well.""")
     parser.add_argument('-n', "--tips_number", type=int, default=10 , help='Sets the number of isolates (default is 10)')
     parser.add_argument('-g', "--alignment_len", type=int, default=5000 , help='Sets the number and lengths of fragments of genetic material (default is 5000)')
-    parser.add_argument('-l', "--recom_len", type=int, default=700, help='Sets the average length of an external recombinant interval, (default is 500)')
-    parser.add_argument('-r', "--recom_rate",type=float, default=0.02, help='Sets the site-specific rate of external (between species) recombination, (default is 0.05)')
+    parser.add_argument('-l', "--recom_len", type=int, default=800, help='Sets the average length of an external recombinant interval, (default is 500)')
+    parser.add_argument('-r', "--recom_rate",type=float, default=0.05, help='Sets the site-specific rate of external (between species) recombination, (default is 0.05)')
     parser.add_argument('-nu',"--nu" ,  type=float, default=0.2, help='nu')
     parser.add_argument('-s',"--status" ,  type=int, default=0, help='0 is just leaves, 1 is for both internal nodes and leaves and 2 is just internal nodes')
     parser.add_argument('-t', "--tMRCA", type=float, default=0.01 ,help='tMRCA')
@@ -1142,13 +1152,13 @@ if __name__ == "__main__":
     nodes_number = len(tree.nodes())
     recom_num = give_recom_num(tree,recom_rate,alignment_len)
     node_labels,node_weight = make_nodes_weight(tree, status)
-    df, all_data = recom_on_alignment_sis(recom_num, recom_len, alignment_len, clonal_tree, node_labels, node_weight, nu_ex,taxa)
-    # df,all_data = recom_on_alignment(recom_num, recom_len, alignment_len, clonal_tree, node_labels, node_weight, nu_ex, taxa)
+    # df, all_data = recom_on_alignment_sis(recom_num, recom_len, alignment_len, clonal_tree, node_labels, node_weight, nu_ex,taxa)
+    df,all_data = recom_on_alignment(recom_num, recom_len, alignment_len, clonal_tree, node_labels, node_weight, nu_ex, taxa)
     make_recom_fig(all_data,alignment_len, nodes_number, tips_number, clonal_tree)
     final_report = generate_final_report(df, alignment_len, clonal_tree, tips_number)
 
 
-    # # print(final_report)
+    print(final_report[['nodes','start','end']])
     # plt.show()
 
 

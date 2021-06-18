@@ -699,9 +699,9 @@ def phyloHMM_Log(tree,output):
 
 if __name__ == "__main__":
 
-    tree_path = '/home/nehleh/Desktop/sisters/mutiple_sisters/num_1_RAxML_bestTree.tree'
+    tree_path = '/home/nehleh/Desktop/sisters/new_BaciSim/num_1_RAxML_bestTree.tree'
     # recomLog = '/home/nehleh/work/results/num_5/num_5_BaciSim_Log.txt'
-    genomefile = '/home/nehleh/Desktop/sisters/mutiple_sisters/num_1_wholegenome_1.fasta'
+    genomefile = '/home/nehleh/Desktop/sisters/new_BaciSim/num_1_wholegenome_1.fasta'
     # xml_path = '/home/nehleh/PhyloCode/RecomPhyloHMM/bin/GTR_template.xml'
 
     parser = argparse.ArgumentParser(description='''You did not specify any parameters.''')
