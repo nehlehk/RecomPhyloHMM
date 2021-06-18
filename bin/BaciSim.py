@@ -993,8 +993,8 @@ def generate_final_report(df,alignment_len,clonal_tree,tips_number):
             stat.append("overlap")
             # final_tree.append("")
             # final_tree.append(my_merge_trees(r_trees[i],nodes[i]))
-            final_tree.append(merge_conflict(r_trees[i], nodes[i]))
-
+            # final_tree.append(merge_conflict(r_trees[i], nodes[i]))
+            final_tree.append(simple_merge(r_trees[i], nodes[i]))
 
     final = pd.DataFrame({'start': bounds[:-1], 'end': bounds[1:] ,'nodes':nodes, 'descendants':children,  'len':final_len , 'status':stat ,'final_tree': final_tree ,'total': total ,'tree':r_trees })
     final[['nodes', 'start', 'end', 'len', 'descendants', 'status']].to_csv('./BaciSim_Log.txt', sep='\t', header=True)
@@ -1014,7 +1014,27 @@ def generate_final_report(df,alignment_len,clonal_tree,tips_number):
 
     return final
 # ----------------------------------------------------------------------------------------------------------------------
+def simple_merge(recomtrees , recomnodes):
+    clonaltree = Tree.get_from_string(clonal_tree, schema='newick')
+    set_index(clonaltree)
 
+    equ = np.zeros((len(recomtrees), 4))
+    for treeid in range(len(recomtrees)):
+        rtree = Tree.get_from_string(recomtrees[treeid], schema='newick')
+        set_index(rtree)
+        equ[treeid, 0] = recomnodes[treeid]
+        equ[treeid, 1:3] = give_equivalent_node(rtree)
+        equ[treeid, 3] = treeid
+
+    # print(equ)
+
+    for i in range(len(equ)):
+      main_node = clonaltree.find_node_with_label(str(int(equ[i][0])))
+      # print(main_node)
+      main_node.edge_length = equ[i][2]
+
+    return clonaltree.as_string(schema="newick")
+# ----------------------------------------------------------------------------------------------------------------------
 def merge_conflict(recomtrees , recomnodes):
 
   clonaltree = Tree.get_from_string(clonal_tree,schema='newick')
@@ -1154,12 +1174,13 @@ if __name__ == "__main__":
     node_labels,node_weight = make_nodes_weight(tree, status)
     # df, all_data = recom_on_alignment_sis(recom_num, recom_len, alignment_len, clonal_tree, node_labels, node_weight, nu_ex,taxa)
     df,all_data = recom_on_alignment(recom_num, recom_len, alignment_len, clonal_tree, node_labels, node_weight, nu_ex, taxa)
+    # print(df)
     make_recom_fig(all_data,alignment_len, nodes_number, tips_number, clonal_tree)
     final_report = generate_final_report(df, alignment_len, clonal_tree, tips_number)
 
 
-    print(final_report[['nodes','start','end']])
-    # plt.show()
+    # print(final_report[['nodes','start','end']])
+    plt.show()
 
 
 
