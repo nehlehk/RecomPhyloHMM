@@ -886,7 +886,7 @@ def recom_on_alignment(recom_num,recom_len,alignment_len,clonal_tree,node_labels
       while not starting_falg:
         random_tip = np.random.choice(node_labels,1,node_weight)
         start_pos = random.randint(ideal_gap*recom_id, ideal_gap * (recom_id+1) )
-        r_len = random.randint(threshold_len, recom_len + threshold_len)
+        r_len = random.randint(recom_len, recom_len + threshold_len)
         if (start_pos + r_len <= alignment_len) :
           nodes.append(random_tip)
           starts.append(start_pos)
@@ -1135,9 +1135,6 @@ def merge_conflict(recomtrees , recomnodes):
     return maintree.as_string(schema="newick")
 
 # ----------------------------------------------------------------------------------------------------------------------
-
-
-
 if __name__ == "__main__":
 
     parser=argparse.ArgumentParser(
@@ -1145,10 +1142,10 @@ if __name__ == "__main__":
         epilog="""All's well that ends well.""")
     parser.add_argument('-n', "--tips_number", type=int, default=10 , help='Sets the number of isolates (default is 10)')
     parser.add_argument('-g', "--alignment_len", type=int, default=5000 , help='Sets the number and lengths of fragments of genetic material (default is 5000)')
-    parser.add_argument('-l', "--recom_len", type=int, default=800, help='Sets the average length of an external recombinant interval, (default is 500)')
-    parser.add_argument('-r', "--recom_rate",type=float, default=0.05, help='Sets the site-specific rate of external (between species) recombination, (default is 0.05)')
+    parser.add_argument('-l', "--recom_len", type=int, default=500, help='Sets the average length of an external recombinant interval, (default is 500)')
+    parser.add_argument('-r', "--recom_rate",type=float, default=0.04, help='Sets the site-specific rate of external (between species) recombination, (default is 0.05)')
     parser.add_argument('-nu',"--nu" ,  type=float, default=0.2, help='nu')
-    parser.add_argument('-s',"--status" ,  type=int, default=0, help='0 is just leaves, 1 is for both internal nodes and leaves and 2 is just internal nodes')
+    parser.add_argument('-s',"--status" ,  type=int, default=1, help='0 is just leaves, 1 is for both internal nodes and leaves and 2 is just internal nodes')
     parser.add_argument('-t', "--tMRCA", type=float, default=0.01 ,help='tMRCA')
 
 
@@ -1177,10 +1174,7 @@ if __name__ == "__main__":
     # print(df)
     make_recom_fig(all_data,alignment_len, nodes_number, tips_number, clonal_tree)
     final_report = generate_final_report(df, alignment_len, clonal_tree, tips_number)
-
-
-    # print(final_report[['nodes','start','end']])
-    plt.show()
+    # plt.show()
 
 
 
